@@ -1,4 +1,4 @@
-const CACHE = 'arjun-fl-v8';
+const CACHE = 'arjun-fl-v9';
 const ASSETS = [
   '/fl-tracker/',
   '/fl-tracker/index.html',
