@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FL Tracker">
+<meta name="theme-color" content="#0f0f11">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Arjun FL Hours Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11; --surface: #17171a; --surface2: #1e1e23;
+    --border: #2a2a32; --accent: #c8f060; --accent2: #60c8f0;
+    --accent3: #f060c8; --text: #e8e8ec; --text2: #888896;
+    --text3: #555560; --danger: #f06060;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden;
+    /* safe area for iPhone notch */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(200,240,96,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(200,240,96,0.025) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 20px 16px 80px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .month-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; }
+  .month-nav button { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; padding: 2px 6px; border-radius: 6px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .month-nav button:active { background: var(--border); color: var(--accent); }
+  .month-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; min-width: 120px; text-align: center; }
+  .rate-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .rate-group { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 180px; }
+  .rate-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); white-space: nowrap; }
+  .rate-input-wrap { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; transition: border-color 0.15s; flex: 1; }
+  .rate-input-wrap:focus-within { border-color: var(--accent); }
+  .currency-symbol { color: var(--accent); font-size: 16px; font-weight: 500; }
+  .rate-input { background: none; border: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; width: 100%; outline: none; }
+  .rate-input::placeholder { color: var(--text3); }
+  .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .summary-card.c-green { background: linear-gradient(135deg,#1a2010,#111a0a); border-color: var(--accent); }
+  .summary-card.c-blue  { background: linear-gradient(135deg,#101a1e,#0a1318); border-color: var(--accent2); }
+  .summary-card.c-pink  { background: linear-gradient(135deg,#1a1020,#110a18); border-color: var(--accent3); }
+  .sc-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 6px; }
+  .sc-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; }
+  .sc-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--text2); margin-bottom: 12px; }
+  .tabs-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .tab { background: var(--surface); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 13px; padding: 8px 16px; border-radius: 100px; cursor: pointer; transition: all 0.15s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .tab:active { opacity: 0.7; }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #0f0f11; font-weight: 600; }
+  .tab-add { background: var(--accent); border: none; color: #0f0f11; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 100px; cursor: pointer; transition: all 0.15s; box-shadow: 0 0 16px rgba(200,240,96,0.35); -webkit-tap-highlight-color: transparent; }
+  .tab-add:active { opacity: 0.8; }
+  .client-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .client-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; gap: 10px; }
+  .client-name-wrap { display: flex; align-items: center; gap: 10px; }
+  .client-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .client-name-input { background: none; border: none; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: var(--text); outline: none; min-width: 80px; max-width: 180px; }
+  .client-rate-override { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .override-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+  .override-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .override-toggle.active { border-color: var(--accent2); color: var(--accent2); background: rgba(96,200,240,0.08); }
+  .mode-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .mode-btn:active { opacity: 0.7; }
+  .mode-active { background: rgba(200,240,96,0.15); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .client-custom-rate { display: flex; align-items: center; gap: 6px; background: rgba(96,200,240,0.08); border: 1px solid rgba(96,200,240,0.3); border-radius: 8px; padding: 5px 12px; }
+  .client-custom-rate input { background: none; border: none; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 70px; outline: none; }
+  .delete-client-btn { background: none; border: 1px solid var(--border); color: var(--text3); font-size: 13px; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .delete-client-btn:active { border-color: var(--danger); color: var(--danger); }
+  .log-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .log-table { width: 100%; border-collapse: collapse; min-width: 400px; }
+  .log-table th { padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 400; }
+  .log-table th.right, .log-table td.right { text-align: right; }
+  .log-table tr.entry-row { border-bottom: 1px solid rgba(42,42,50,0.7); }
+  .log-table tr.entry-row:last-child { border-bottom: none; }
+  .log-table td { padding: 8px 14px; font-size: 13px; vertical-align: middle; }
+  .date-input { background: none; border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 8px; border-radius: 6px; outline: none; max-width: 130px; }
+  .hm-wrap { display: flex; align-items: center; gap: 4px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; transition: border-color 0.15s; width: fit-content; }
+  .hm-wrap:focus-within { border-color: var(--accent); }
+  .time-select {
+    background: none; border: none; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500;
+    outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+    text-align: center; padding: 0 2px;
+  }
+  .time-select option { background: #1e1e23; color: var(--text); }
+  .hm-input { background: none; border: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; text-align: center; outline: none; -moz-appearance: textfield; }
+  .hm-input::-webkit-inner-spin-button, .hm-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .hm-input.hr-input { width: 36px; }
+  .hm-input.min-input { width: 28px; }
+  .hm-sep { color: var(--text3); font-size: 13px; }
+  .amount-cell { font-weight: 500; color: var(--accent); font-size: 14px; white-space: nowrap; }
+  .notes-input { background: none; border: none; color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; width: 100%; min-width: 70px; }
+  .notes-input::placeholder { color: var(--text3); }
+  .del-row-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 6px 10px; border-radius: 6px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .del-row-btn:active { color: var(--danger); }
+  .add-row-area { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface2); }
+  .add-row-btn { background: rgba(200,240,96,0.1); border: 1px solid var(--accent); color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; padding: 10px 20px; border-radius: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; width: 100%; }
+  .add-row-btn:active { background: rgba(200,240,96,0.22); }
+  .advance-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(96,200,240,0.04); border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .advance-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent2); white-space: nowrap; }
+  .advance-input-wrap { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid rgba(96,200,240,0.3); border-radius: 8px; padding: 6px 12px; }
+  .advance-input-wrap:focus-within { border-color: var(--accent2); }
+  .advance-input { background: none; border: none; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 110px; outline: none; -moz-appearance: textfield; }
+  .advance-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .advance-hint { font-size: 11px; color: var(--text3); }
+  .client-footer { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; }
+  .footer-stat { text-align: right; }
+  .footer-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 2px; }
+  .footer-stat-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .export-btn { background: rgba(240,96,200,0.1); border: 1px solid var(--accent3); color: var(--accent3); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .export-btn:active { background: rgba(240,96,200,0.2); }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 28px 24px calc(28px + env(safe-area-inset-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .modal-backdrop.open .modal { transform: translateY(0); }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 20px; }
+  .modal-field { margin-bottom: 16px; }
+  .modal-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 6px; display: block; }
+  .modal-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 16px; padding: 12px 14px; border-radius: 10px; width: 100%; outline: none; transition: border-color 0.15s; }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-primary { flex: 1; background: var(--accent); border: none; color: #0f0f11; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; padding: 14px; border-radius: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary { flex: 1; background: none; border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 13px; padding: 14px; border-radius: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .btn-secondary:active { border-color: var(--text2); }
+  .empty-state { padding: 40px 24px; text-align: center; color: var(--text3); font-size: 13px; }
+  .empty-state .big { font-size: 36px; margin-bottom: 12px; }
+  .toast { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--accent); color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 20px; border-radius: 100px; z-index: 200; transition: transform 0.3s ease; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  /* sync indicator */
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-left: 8px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Arjun <span>FL</span> Tracker</div>
+    <div class="month-nav">
+      <button id="btnPrev">&#8249;</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button id="btnNext">&#8250;</button>
+    </div>
+  </header>
+
+  <div class="rate-banner">
+    <div class="rate-group">
+      <span class="rate-label">Default Rate / hr</span>
+      <div class="rate-input-wrap">
+        <span class="currency-symbol">&#8377;</span>
+        <input type="number" class="rate-input" id="defaultRate" placeholder="0" min="0" inputmode="numeric">
+      </div>
+    </div>
+    <button class="export-btn" id="btnExport">&#11015; Export CSV</button>
+  </div>
+
+  <div class="summary-row" id="summaryRow"></div>
+  <div class="section-title">Clients</div>
+  <div class="tabs-row" id="tabsRow"></div>
+  <div id="clientPanel"></div>
+</div>
+
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Client</div>
+    <div class="modal-field">
+      <label class="modal-label">Client Name</label>
+      <input type="text" class="modal-input" id="newClientName" placeholder="e.g. Acme Corp" maxlength="30" autocomplete="off">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" id="btnModalCancel">Cancel</button>
+      <button class="btn-primary"   id="btnModalConfirm">Add Client</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SHORT   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOTS    = ['#c8f060','#60c8f0','#f060c8','#f0c060','#60f0a0','#f09060'];
+
+let S = { defaultRate:0, month:new Date().getMonth(), year:new Date().getFullYear(), activeClient:null, clients:[] };
+
+function save() {
+  try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem('arjun_fl_v1') || localStorage.getItem('hours_tracker_v2') || localStorage.getItem('arjun_tracker_v1');
+    if (raw) S = JSON.parse(raw);
+  } catch(e){}
+  if (!S.clients)      S.clients = [];
+  if (S.month == null) S.month   = new Date().getMonth();
+  if (S.year  == null) S.year    = new Date().getFullYear();
+  S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.entries) c.entries=[]; });
+  if (!S.activeClient && S.clients.length > 0) S.activeClient = S.clients[0].id;
+}
+
+const uid    = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const today  = () => new Date().toISOString().slice(0,10);
+const toMins = (h,m) => { const hh=parseInt(String(h).trim())||0, mm=parseInt(String(m).trim())||0; return hh*60+mm; };
+const toHrs  = m => m/60;
+const fmtHM  = m => { if(!m) return '0h 0m'; const h=Math.floor(m/60),mn=m%60; return mn?h+'h '+mn+'m':h+'h'; };
+const fmtINR = n => '\u20B9'+Math.round(n).toLocaleString('en-IN');
+const eMins  = e => { if(e.minutes!=null) return Math.round(Number(e.minutes))||0; return Math.round((Number(e.hours)||0)*60); };
+const esc    = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function getRate(c)    { return (c.customRate!=null&&c.customRate>0)?Number(c.customRate):Number(S.defaultRate)||0; }
+function getAdv(c)     { return Number((c.advances||{})[''+S.year+'-'+S.month])||0; }
+function setAdv(c,v)   { if(!c.advances)c.advances={}; c.advances[''+S.year+'-'+S.month]=Number(v)||0; }
+function parseDate(str) {
+  // parse YYYY-MM-DD directly to avoid UTC timezone shift on iOS
+  const p = str ? str.split('-') : [];
+  if (p.length === 3) return { y: parseInt(p[0]), m: parseInt(p[1])-1 };
+  const d = new Date(str); return { y: d.getFullYear(), m: d.getMonth() };
+}
+function mEntries(c) {
+  return c.entries.filter(e => {
+    const p = parseDate(e.date);
+    return p.m === S.month && p.y === S.year;
+  });
+}
+function earned(c)     { return clientEarnedAmount(c); }
+
+function render() {
+  document.getElementById('monthLabel').textContent = MONTHS[S.month]+' '+S.year;
+  document.getElementById('defaultRate').value = S.defaultRate||'';
+  renderSummary(); renderTabs(); renderPanel();
+}
+
+function renderSummary() {
+  const te=S.clients.reduce((s,c)=>s+earned(c),0);
+  const ta=S.clients.reduce((s,c)=>s+getAdv(c),0);
+  const nc=te-ta;
+  const tm=S.clients.reduce((s,c)=>s+mEntries(c).reduce((a,e)=>a+eMins(e),0),0);
+  const ac=S.clients.filter(c=>mEntries(c).some(e=>eMins(e)>0)).length;
+  document.getElementById('summaryRow').innerHTML=
+    '<div class="summary-card c-green"><div class="sc-label">Total Earned</div><div class="sc-value" style="color:var(--accent)">'+fmtINR(te)+'</div><div class="sc-sub">'+MONTHS[S.month]+' '+S.year+'</div></div>'+
+    '<div class="summary-card c-blue"><div class="sc-label">Advance</div><div class="sc-value" style="color:var(--accent2)">'+fmtINR(ta)+'</div><div class="sc-sub">received</div></div>'+
+    '<div class="summary-card c-pink"><div class="sc-label">To Collect</div><div class="sc-value" style="color:'+(nc<0?'var(--danger)':'var(--accent3)')+'">'+fmtINR(Math.abs(nc))+'</div><div class="sc-sub">'+(nc<0?'⚠ over-advance':'net of advance')+'</div></div>'+
+    '<div class="summary-card"><div class="sc-label">Total Time</div><div class="sc-value" style="color:var(--text2);font-size:18px">'+fmtHM(tm)+'</div><div class="sc-sub">'+ac+' client'+(ac!==1?'s':'')+'</div></div>';
+}
+
+function renderTabs() {
+  let h='';
+  S.clients.forEach(c=>{
+    h+='<button class="tab'+(c.id===S.activeClient?' active':'')+'" data-action="switch" data-id="'+c.id+'">'+esc(c.name)+'</button>';
+  });
+  h+='<button class="tab-add" data-action="open-modal">&#xFF0B; Add Client</button>';
+  document.getElementById('tabsRow').innerHTML=h;
+}
+
+function getBillingMode(c) { return c.billingMode || 'hourly'; }
+
+function clientEarnedAmount(c) {
+  const mode = getBillingMode(c);
+  const ents = mEntries(c);
+  if (mode === 'hourly')   return ents.reduce((s,e) => s + toHrs(eMins(e)) * getRate(c), 0);
+  if (mode === 'monthly')  return Number(c.monthlyFee) || 0;
+  if (mode === 'onetime')  return ents.reduce((s,e) => s + (Number(e.fixedAmt)||0), 0);
+  return 0;
+}
+
+function renderPanel() {
+  const panel=document.getElementById('clientPanel');
+  if(!S.clients.length){panel.innerHTML='<div class="empty-state"><div class="big">🙌</div>Add a client to start logging</div>';return;}
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c){panel.innerHTML='';return;}
+
+  const mode  = getBillingMode(c);
+  const rate  = getRate(c);
+  const adv   = getAdv(c);
+  const ents  = mEntries(c);
+  const tMins = ents.reduce((s,e)=>s+eMins(e),0);
+  const earn  = clientEarnedAmount(c);
+  const net   = earn - adv;
+  const dot   = DOTS[S.clients.indexOf(c)%DOTS.length];
+  const sorted= [...ents].sort((a,b)=>a.date.localeCompare(b.date));
+
+  const hrOpts  = Array.from({length:24},(_,i)=>i);
+  const minOpts = Array.from({length:60},(_,i)=>i);
+
+  let rows='';
+  if(!sorted.length){
+    rows='<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">No entries for '+SHORT[S.month]+' '+S.year+'</td></tr>';
+  } else {
+    sorted.forEach(e=>{
+      const mins=eMins(e), eH=Math.floor(mins/60), eM=mins%60;
+
+      let timeCell='', amtCell='';
+
+      if(mode==='hourly'){
+        const hrSel='<select class="time-select" data-action="ehr" data-eid="'+e.id+'">'+
+          hrOpts.map(h=>'<option value="'+h+'"'+(h===eH?' selected':'')+'>'+h+'</option>').join('')+'</select>';
+        const minSel='<select class="time-select" data-action="emin" data-eid="'+e.id+'">'+
+          minOpts.map(m=>'<option value="'+m+'"'+(m===eM?' selected':'')+'>'+String(m).padStart(2,'0')+'</option>').join('')+'</select>';
+        timeCell='<div class="hm-wrap">'+hrSel+'<span class="hm-sep">h</span>'+minSel+'<span class="hm-sep">m</span></div>';
+        amtCell=mins>0?fmtINR(toHrs(mins)*rate):'\u2014';
+      } else if(mode==='monthly'){
+        const hrSel='<select class="time-select" data-action="ehr" data-eid="'+e.id+'">'+
+          hrOpts.map(h=>'<option value="'+h+'"'+(h===eH?' selected':'')+'>'+h+'</option>').join('')+'</select>';
+        const minSel='<select class="time-select" data-action="emin" data-eid="'+e.id+'">'+
+          minOpts.map(m=>'<option value="'+m+'"'+(m===eM?' selected':'')+'>'+String(m).padStart(2,'0')+'</option>').join('')+'</select>';
+        timeCell='<div class="hm-wrap">'+hrSel+'<span class="hm-sep">h</span>'+minSel+'<span class="hm-sep">m</span></div>';
+        amtCell='<span style="color:var(--text3);font-size:11px;">ref only</span>';
+      } else if(mode==='onetime'){
+        timeCell='<span style="color:var(--text3);font-size:12px;">—</span>';
+        amtCell='<div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">'+
+          '<span style="color:var(--accent);font-size:13px;">₹</span>'+
+          '<input type="text" inputmode="numeric" class="notes-input" style="color:var(--accent);width:80px;font-weight:500;" placeholder="amount" value="'+(e.fixedAmt||'')+'" data-action="efixedamt" data-eid="'+e.id+'">'+
+          '</div>';
+      }
+
+      rows+='<tr class="entry-row" data-eid="'+e.id+'">'+
+        '<td><input class="date-input" type="date" value="'+e.date+'" data-action="edate" data-eid="'+e.id+'"></td>'+
+        '<td>'+timeCell+'</td>'+
+        '<td class="amount-cell" id="amt-'+e.id+'">'+amtCell+'</td>'+
+        '<td><input class="notes-input" type="text" placeholder="description..." maxlength="60" value="'+esc(e.notes||'')+'" data-action="enotes" data-eid="'+e.id+'"></td>'+
+        '<td class="right"><button class="del-row-btn" data-action="del-entry" data-eid="'+e.id+'">\u2715</button></td>'+
+        '</tr>';
+    });
+  }
+
+  // billing mode selector
+  const modes = [
+    {v:'hourly',  label:'Per Hour'},
+    {v:'monthly', label:'Per Month'},
+    {v:'onetime', label:'One Time'}
+  ];
+  const modeHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'+
+    '<span class="override-label">Billing</span>'+
+    modes.map(m=>
+      '<button class="mode-btn'+(mode===m.v?' mode-active':'')+'" data-action="set-mode" data-mode="'+m.v+'">'+m.label+'</button>'
+    ).join('')+
+    '</div>';
+
+  // extra config depending on mode
+  let modeConfigHtml = '';
+  if(mode==='hourly'){
+    const crHtml = c.customRate!=null ?
+      '<div class="client-custom-rate"><span style="color:var(--accent2);font-size:12px;">₹</span>'+
+      '<input type="text" inputmode="numeric" value="'+c.customRate+'" data-action="crate" style="background:none;border:none;color:var(--accent2);font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;width:70px;outline:none;">'+
+      '<span style="font-size:11px;color:var(--accent2);">/hr</span></div>' : '';
+    modeConfigHtml =
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+        '<button class="override-toggle'+(c.customRate!=null?' active':'')+'" data-action="toggle-rate">'+(c.customRate!=null?'✓ Custom Rate':'+ Custom Rate')+'</button>'+
+        crHtml+
+        '<span style="font-size:11px;color:var(--text3);">₹'+rate+'/hr</span>'+
+      '</div>';
+  } else if(mode==='monthly'){
+    modeConfigHtml =
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:11px;color:var(--text3);">Monthly Fee</span>'+
+        '<div class="client-custom-rate">'+
+          '<span style="color:var(--accent);font-size:12px;">₹</span>'+
+          '<input type="text" inputmode="numeric" placeholder="0" value="'+(c.monthlyFee||'')+'" data-action="monthly-fee" style="background:none;border:none;color:var(--accent);font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;width:90px;outline:none;">'+
+          '<span style="font-size:11px;color:var(--text3);">/month</span>'+
+        '</div>'+
+      '</div>';
+  } else if(mode==='onetime'){
+    modeConfigHtml = '<span style="font-size:11px;color:var(--text3);">Add each payment as a separate entry with amount</span>';
+  }
+
+  // footer earned label varies by mode
+  const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Total Payments';
+  const timeFooter = mode!=='onetime' ?
+    '<div class="footer-stat"><div class="footer-stat-label">Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>' : '';
+
+  // table header varies
+  const thTime = mode==='onetime' ? '<th>—</th>' : '<th>Time</th>';
+  const thAmt  = mode==='onetime' ? '<th>Payment</th>' : '<th>Amount</th>';
+
+  panel.innerHTML=
+    '<div class="client-panel">'+
+      '<div class="client-panel-header">'+
+        '<div class="client-name-wrap">'+
+          '<div class="client-dot" style="background:'+dot+'"></div>'+
+          '<input type="text" class="client-name-input" value="'+esc(c.name)+'" maxlength="30" data-action="cname">'+
+        '</div>'+
+        '<button class="delete-client-btn" data-action="del-client">🗑</button>'+
+      '</div>'+
+      '<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;gap:10px;">'+
+        modeHtml+
+        modeConfigHtml+
+      '</div>'+
+      '<div class="log-table-wrap"><table class="log-table">'+
+        '<thead><tr><th>Date</th>'+thTime+thAmt+'<th>Notes</th><th></th></tr></thead>'+
+        '<tbody>'+rows+'</tbody>'+
+      '</table></div>'+
+      '<div class="add-row-area"><button class="add-row-btn" data-action="add-entry">＋ Add entry</button></div>'+
+      '<div class="advance-row">'+
+        '<span class="advance-label">💰 Advance</span>'+
+        '<div class="advance-input-wrap">'+
+          '<span style="color:var(--accent2);font-size:14px;">₹</span>'+
+          '<input type="text" inputmode="numeric" class="advance-input" placeholder="0" value="'+(adv||'')+'" data-action="advance">'+
+        '</div>'+
+        '<span class="advance-hint">paid at month start</span>'+
+      '</div>'+
+      '<div class="client-footer">'+
+        timeFooter+
+        '<div class="footer-stat"><div class="footer-stat-label">'+earnLabel+'</div><div class="footer-stat-value" style="color:var(--text)">'+fmtINR(earn)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">− Advance</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">To Invoice</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
+      '</div>'+
+    '</div>';
+}
+
+function openModal()  { document.getElementById('addModal').classList.add('open'); setTimeout(()=>document.getElementById('newClientName').focus(),80); }
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+function confirmAdd() {
+  const name=document.getElementById('newClientName').value.trim();
+  if(!name){showToast('Enter a client name');return;}
+  const c={id:uid(),name,customRate:null,advances:{},entries:[]};
+  S.clients.push(c); S.activeClient=c.id;
+  closeModal(); save(); render();
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function changeMonth(d) {
+  S.month+=d;
+  if(S.month>11){S.month=0;S.year++;}
+  if(S.month<0){S.month=11;S.year--;}
+  save(); render();
+}
+
+document.addEventListener('click', function(e) {
+  const el=e.target.closest('[data-action]');
+  if(!el) return;
+  const act=el.dataset.action;
+  if(act==='open-modal')  {openModal();return;}
+  if(act==='switch')      {S.activeClient=el.dataset.id;save();renderTabs();renderPanel();return;}
+  if(act==='del-entry')   {delEntry(el.dataset.eid);return;}
+  if(act==='add-entry')   {addEntry();return;}
+  if(act==='del-client')  {delClient();return;}
+  if(act==='toggle-rate') {toggleRate();return;}
+  if(act==='set-mode')    {
+    const c=S.clients.find(x=>x.id===S.activeClient);
+    if(!c) return;
+    c.billingMode=el.dataset.mode;
+    save();renderPanel();renderSummary();
+    return;
+  }
+});
+
+document.addEventListener('input', function(e) {
+  const el=e.target;
+  const act=el.dataset?el.dataset.action:null;
+  if(!act) return;
+  if(el.id==='defaultRate'){S.defaultRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  if(act==='cname')  {c.name=el.value||'Client';save();renderTabs();return;}
+  if(act==='crate')  {c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='monthly-fee'){c.monthlyFee=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='efixedamt'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(!entry) return;
+    entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
+    save();renderSummary();renderPanel();return;
+  }
+  if(act==='advance'){
+    setAdv(c,el.value);save();renderSummary();
+    const adv=getAdv(c),earn=earned(c),net=earn-adv;
+    const fa=document.getElementById('ftr-adv'),fn=document.getElementById('ftr-net');
+    if(fa)fa.textContent=fmtINR(adv);
+    if(fn){fn.textContent=fmtINR(net);fn.style.color=net<0?'var(--danger)':'var(--accent)';}
+    return;
+  }
+  if(act==='edate'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(entry){entry.date=el.value;save();renderPanel();renderSummary();}
+    return;
+  }
+  if(act==='enotes'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(entry){entry.notes=el.value;save();}
+    return;
+  }
+  if(act==='ehr'||act==='emin'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(!entry) return;
+    // get sibling select values directly from the DOM — selects always return correct values
+    const row  = el.closest('tr');
+    const hSel = row.querySelector('[data-action="ehr"]');
+    const mSel = row.querySelector('[data-action="emin"]');
+    const hv   = hSel ? parseInt(hSel.value)||0 : Math.floor((entry.minutes||0)/60);
+    const mv   = mSel ? parseInt(mSel.value)||0 : (entry.minutes||0)%60;
+    entry.minutes = hv*60 + mv;
+    delete entry.hours;
+    delete entry._hr; delete entry._min;
+    save();
+    const amtEl=document.getElementById('amt-'+entry.id);
+    if(amtEl) amtEl.textContent=entry.minutes>0?fmtINR(toHrs(entry.minutes)*getRate(c)):'\u2014';
+    renderSummary();
+    return;
+  }
+});
+
+// selects and some iOS inputs fire 'change' instead of 'input' — handle both
+document.addEventListener('change', function(e) {
+  const el=e.target;
+  const act=el.dataset?el.dataset.action:null;
+
+  // default rate
+  if(el.id==='defaultRate'){
+    S.defaultRate=Number(el.value)||0;
+    save();renderSummary();renderPanel();
+    return;
+  }
+
+  if(!act) return;
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+
+  if(act==='crate'){c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='monthly-fee'){c.monthlyFee=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='efixedamt'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(!entry) return;
+    entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
+    save();renderSummary();renderPanel();return;
+  }
+
+  if(act==='advance'){
+    setAdv(c,el.value);save();renderSummary();
+    const adv=getAdv(c),earn=earned(c),net=earn-adv;
+    const fa=document.getElementById('ftr-adv'),fn=document.getElementById('ftr-net');
+    if(fa)fa.textContent=fmtINR(adv);
+    if(fn){fn.textContent=fmtINR(net);fn.style.color=net<0?'var(--danger)':'var(--accent)';}
+    return;
+  }
+
+  if(act==='edate'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(entry){entry.date=el.value;save();renderPanel();renderSummary();}
+    return;
+  }
+
+  if(act==='ehr'||act==='emin'){
+    const entry=c.entries.find(x=>x.id===el.dataset.eid);
+    if(!entry) return;
+    const row=el.closest('tr');
+    const hSel=row?row.querySelector('[data-action="ehr"]'):null;
+    const mSel=row?row.querySelector('[data-action="emin"]'):null;
+    const hv=hSel?parseInt(hSel.value)||0:Math.floor((entry.minutes||0)/60);
+    const mv=mSel?parseInt(mSel.value)||0:(entry.minutes||0)%60;
+    entry.minutes=hv*60+mv;
+    delete entry.hours;
+    save();
+    const rate=getRate(c);
+    const amtEl=document.getElementById('amt-'+entry.id);
+    if(amtEl) amtEl.textContent=entry.minutes>0?fmtINR(toHrs(entry.minutes)*rate):'\u2014';
+    renderSummary();
+    // re-render panel footer so total time + to invoice update correctly
+    renderPanel();
+    return;
+  }
+});
+
+document.getElementById('btnPrev').addEventListener('click',()=>changeMonth(-1));
+document.getElementById('btnNext').addEventListener('click',()=>changeMonth(1));
+document.getElementById('btnExport').addEventListener('click',exportCSV);
+document.getElementById('btnModalCancel').addEventListener('click',closeModal);
+document.getElementById('btnModalConfirm').addEventListener('click',confirmAdd);
+document.getElementById('newClientName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAdd();});
+document.getElementById('addModal').addEventListener('click',e=>{if(e.target===document.getElementById('addModal'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+function addEntry(){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  const mode=getBillingMode(c);
+  c.entries.push({id:uid(),date:today(),minutes:0,notes:'',fixedAmt:0});
+  save();renderPanel();renderSummary();
+  if(mode!=='onetime'){
+    setTimeout(()=>{const ins=document.querySelectorAll('[data-action="ehr"]');if(ins.length)ins[ins.length-1].focus();},50);
+  }
+}
+function delEntry(eid){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  c.entries=c.entries.filter(e=>e.id!==eid);
+  save();renderPanel();renderSummary();
+}
+function delClient(){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c||!confirm('Delete "'+c.name+'" and all entries?')) return;
+  S.clients=S.clients.filter(x=>x.id!==c.id);
+  S.activeClient=S.clients.length?S.clients[0].id:null;
+  save();render();
+}
+function toggleRate(){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  c.customRate=c.customRate!=null?null:(S.defaultRate||0);
+  save();renderPanel();renderSummary();
+}
+
+function exportCSV(){
+  const month=MONTHS[S.month];
+  let csv='Arjun FL Hours Tracker - '+month+' '+S.year+'\n\n';
+  S.clients.forEach(c=>{
+    const mode=getBillingMode(c);
+    csv+='"'+c.name+'" ('+mode+')\n';
+    if(mode==='hourly'){
+      csv+='Date,Time,Decimal Hours,Rate,Amount,Notes\n';
+      const rate=getRate(c);
+      mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+        const m=eMins(e);
+        csv+='"'+e.date+'","'+fmtHM(m)+'",'+toHrs(m).toFixed(2)+','+rate+','+(toHrs(m)*rate).toFixed(2)+',"'+(e.notes||'')+'"\n';
+      });
+    } else if(mode==='monthly'){
+      csv+='Monthly Fee: Rs'+(c.monthlyFee||0)+'\n';
+      csv+='Date,Time (ref),Notes\n';
+      mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+        csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
+      });
+    } else if(mode==='onetime'){
+      csv+='Date,Payment,Description\n';
+      mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+        csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
+      });
+    }
+    csv+='\n';
+  });
+  csv+='\nSUMMARY\nClient,Billing Mode,Earned,Advance,Net to Invoice\n';
+  let gE=0,gA=0;
+  S.clients.forEach(c=>{
+    const earn=clientEarnedAmount(c),adv=getAdv(c);
+    gE+=earn;gA+=adv;
+    csv+='"'+c.name+'",'+getBillingMode(c)+',Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+  });
+  csv+='\nGRAND TOTAL,,Rs'+gE.toFixed(2)+',Rs'+gA.toFixed(2)+',Rs'+(gE-gA).toFixed(2)+'\n';
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='arjun_hours_'+month+'_'+S.year+'.csv';
+  a.click();
+  showToast('CSV exported!');
+}
+
+// ── Service Worker registration ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+load();
+render();
+</script>
+</body>
+</html>
