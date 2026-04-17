@@ -663,7 +663,7 @@ function exportCSV(){
 // ── Service Worker registration ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/fl-tracker/sw.js', {scope: '/fl-tracker/'}).catch(()=>{});
   });
 }
 
