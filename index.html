@@ -488,16 +488,8 @@ document.addEventListener('input', function(e) {
   if(!c) return;
   if(act==='cname')  {c.name=el.value||'Client';save();renderTabs();return;}
   if(act==='crate')  {c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'){
-    c.monthlyFee=Number(el.value)||0;
-    save();renderSummary();updateFooterInPlace(c);
-    return;
-  }
-  if(act==='efixedamt'){
-    const entry=c.entries.find(x=>x.id===el.dataset.eid);
-    if(!entry) return;
-    entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
-    save();renderSummary();updateFooterInPlace(c);
+  if(act==='monthly-fee'||act==='efixedamt'){
+    // do nothing on input — save on blur only to prevent iOS keyboard dismissal
     return;
   }
   if(act==='advance'){
@@ -555,16 +547,8 @@ document.addEventListener('change', function(e) {
   if(!c) return;
 
   if(act==='crate'){c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'){
-    c.monthlyFee=Number(el.value)||0;
-    save();renderSummary();updateFooterInPlace(c);
-    return;
-  }
-  if(act==='efixedamt'){
-    const entry=c.entries.find(x=>x.id===el.dataset.eid);
-    if(!entry) return;
-    entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
-    save();renderSummary();updateFooterInPlace(c);
+  if(act==='monthly-fee'||act==='efixedamt'){
+    // handled on blur only
     return;
   }
 
@@ -604,7 +588,27 @@ document.addEventListener('change', function(e) {
   }
 });
 
-document.getElementById('btnPrev').addEventListener('click',()=>changeMonth(-1));
+// blur handler — saves monthly-fee and efixedamt ONLY when user leaves the field
+// this completely avoids iOS keyboard dismissal on every keystroke
+document.addEventListener('blur', function(e) {
+  const el  = e.target;
+  const act = el.dataset ? el.dataset.action : null;
+  if (!act) return;
+  const c = S.clients.find(x => x.id === S.activeClient);
+  if (!c) return;
+  if (act === 'monthly-fee') {
+    c.monthlyFee = Number(el.value) || 0;
+    save(); renderSummary(); updateFooterInPlace(c);
+    return;
+  }
+  if (act === 'efixedamt') {
+    const entry = c.entries.find(x => x.id === el.dataset.eid);
+    if (!entry) return;
+    entry.fixedAmt = Number(el.value.replace(/[^0-9.]/g,'')) || 0;
+    save(); renderSummary(); updateFooterInPlace(c);
+    return;
+  }
+}, true); // useCapture=true so it fires on iOS
 document.getElementById('btnNext').addEventListener('click',()=>changeMonth(1));
 document.getElementById('btnExport').addEventListener('click',exportCSV);
 document.getElementById('btnModalCancel').addEventListener('click',closeModal);
