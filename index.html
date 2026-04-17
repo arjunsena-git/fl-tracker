@@ -421,6 +421,22 @@ function renderPanel() {
     '</div>';
 }
 
+function updateFooterInPlace(c) {
+  const earn = clientEarnedAmount(c);
+  const adv  = getAdv(c);
+  const net  = earn - adv;
+  // update earned value — find by label since id isn't set on it
+  const footer = document.querySelector('.client-footer');
+  if (!footer) return;
+  const stats = footer.querySelectorAll('.footer-stat-value');
+  // earned is second-to-last stat (before adv and net)
+  if (stats.length >= 3) stats[stats.length-3].textContent = fmtINR(earn);
+  const fa = document.getElementById('ftr-adv');
+  const fn = document.getElementById('ftr-net');
+  if (fa) fa.textContent = fmtINR(adv);
+  if (fn) { fn.textContent = fmtINR(net); fn.style.color = net<0?'var(--danger)':'var(--accent)'; }
+}
+
 function openModal()  { document.getElementById('addModal').classList.add('open'); setTimeout(()=>document.getElementById('newClientName').focus(),80); }
 function closeModal() { document.getElementById('addModal').classList.remove('open'); }
 function confirmAdd() {
@@ -472,12 +488,17 @@ document.addEventListener('input', function(e) {
   if(!c) return;
   if(act==='cname')  {c.name=el.value||'Client';save();renderTabs();return;}
   if(act==='crate')  {c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'){c.monthlyFee=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='monthly-fee'){
+    c.monthlyFee=Number(el.value)||0;
+    save();renderSummary();updateFooterInPlace(c);
+    return;
+  }
   if(act==='efixedamt'){
     const entry=c.entries.find(x=>x.id===el.dataset.eid);
     if(!entry) return;
     entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
-    save();renderSummary();renderPanel();return;
+    save();renderSummary();updateFooterInPlace(c);
+    return;
   }
   if(act==='advance'){
     setAdv(c,el.value);save();renderSummary();
@@ -534,12 +555,17 @@ document.addEventListener('change', function(e) {
   if(!c) return;
 
   if(act==='crate'){c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'){c.monthlyFee=Number(el.value)||0;save();renderSummary();renderPanel();return;}
+  if(act==='monthly-fee'){
+    c.monthlyFee=Number(el.value)||0;
+    save();renderSummary();updateFooterInPlace(c);
+    return;
+  }
   if(act==='efixedamt'){
     const entry=c.entries.find(x=>x.id===el.dataset.eid);
     if(!entry) return;
     entry.fixedAmt=Number(el.value.replace(/[^0-9.]/g,''))||0;
-    save();renderSummary();renderPanel();return;
+    save();renderSummary();updateFooterInPlace(c);
+    return;
   }
 
   if(act==='advance'){
