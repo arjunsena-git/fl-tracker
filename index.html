@@ -78,6 +78,8 @@
   .client-custom-rate input { background: none; border: none; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 70px; outline: none; }
   .delete-client-btn { background: none; border: 1px solid var(--border); color: var(--text3); font-size: 13px; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .delete-client-btn:active { border-color: var(--danger); color: var(--danger); }
+  .export-client-btn { background: rgba(240,96,200,0.08); border: 1px solid rgba(240,96,200,0.4); color: var(--accent3); font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .export-client-btn:active { background: rgba(240,96,200,0.18); }
   .log-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .log-table { width: 100%; border-collapse: collapse; min-width: 400px; }
   .log-table th { padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 400; }
@@ -393,7 +395,10 @@ function renderPanel() {
           '<div class="client-dot" style="background:'+dot+'"></div>'+
           '<input type="text" class="client-name-input" value="'+esc(c.name)+'" maxlength="30" data-action="cname">'+
         '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<button class="export-client-btn" data-action="export-client">&#11015; Export</button>'+
         '<button class="delete-client-btn" data-action="del-client">🗑</button>'+
+        '</div>'+
       '</div>'+
       '<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;gap:10px;">'+
         modeHtml+
@@ -469,6 +474,7 @@ document.addEventListener('click', function(e) {
   if(act==='del-entry')   {delEntry(el.dataset.eid);return;}
   if(act==='add-entry')   {addEntry();return;}
   if(act==='del-client')  {delClient();return;}
+  if(act==='export-client'){const c=S.clients.find(x=>x.id===S.activeClient);if(c)exportClientCSV(c);return;}
   if(act==='toggle-rate') {toggleRate();return;}
   if(act==='set-mode')    {
     const c=S.clients.find(x=>x.id===S.activeClient);
@@ -645,6 +651,42 @@ function toggleRate(){
   if(!c) return;
   c.customRate=c.customRate!=null?null:(S.defaultRate||0);
   save();renderPanel();renderSummary();
+}
+
+function exportClientCSV(c){
+  const month=MONTHS[S.month];
+  const mode=getBillingMode(c);
+  let csv='FL Tracker - '+c.name+' - '+month+' '+S.year+'\n\n';
+  csv+='"'+c.name+'" ('+mode+')\n';
+  if(mode==='hourly'){
+    csv+='Date,Time,Decimal Hours,Rate,Amount,Notes\n';
+    const rate=getRate(c);
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const m=eMins(e);
+      csv+='"'+e.date+'","'+fmtHM(m)+'",'+toHrs(m).toFixed(2)+','+rate+','+(toHrs(m)*rate).toFixed(2)+',"'+(e.notes||'')+'"\n';
+    });
+  } else if(mode==='monthly'){
+    csv+='Monthly Fee: Rs'+(c.monthlyFee||0)+'\n';
+    csv+='Date,Time (ref),Notes\n';
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
+    });
+  } else if(mode==='onetime'){
+    csv+='Date,Payment,Description\n';
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
+    });
+  }
+  const earn=clientEarnedAmount(c),adv=getAdv(c),net=earn-adv;
+  csv+='\nSUMMARY\nBilling Mode,Earned,Advance,To Invoice\n';
+  csv+=mode+',Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+net.toFixed(2)+'\n';
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const safeName=c.name.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.download=safeName+'_'+month+'_'+S.year+'.csv';
+  a.click();
+  showToast(c.name+' exported!');
 }
 
 function exportCSV(){
