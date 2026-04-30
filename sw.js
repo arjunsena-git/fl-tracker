@@ -23,7 +23,6 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // only handle requests within our scope
   if (!e.request.url.includes('/fl-tracker/')) return;
   e.respondWith(
     caches.match(e.request).then(cached => {
