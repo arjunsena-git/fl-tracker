@@ -615,6 +615,7 @@ document.addEventListener('blur', function(e) {
     return;
   }
 }, true); // useCapture=true so it fires on iOS
+document.getElementById('btnPrev').addEventListener('click',()=>changeMonth(-1));
 document.getElementById('btnNext').addEventListener('click',()=>changeMonth(1));
 document.getElementById('btnExport').addEventListener('click',exportCSV);
 document.getElementById('btnModalCancel').addEventListener('click',closeModal);
@@ -735,7 +736,7 @@ function exportCSV(){
 // ── Service Worker registration ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fl-tracker/sw.js', {scope: '/fl-tracker/'}).catch(()=>{});
+    navigator.serviceWorker.register('/sw.js', {scope: '/'}).catch(()=>{});
   });
 }
 
