@@ -111,10 +111,17 @@
   .add-row-btn:active { background: rgba(200,240,96,0.22); }
   .advance-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(96,200,240,0.04); border-top: 1px solid var(--border); flex-wrap: wrap; }
   .advance-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent2); white-space: nowrap; }
+  .advance-field { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .advance-field-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); white-space: nowrap; }
   .advance-input-wrap { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid rgba(96,200,240,0.3); border-radius: 8px; padding: 6px 12px; }
   .advance-input-wrap:focus-within { border-color: var(--accent2); }
   .advance-input { background: none; border: none; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 110px; outline: none; -moz-appearance: textfield; }
   .advance-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .advance-credit .advance-input-wrap { border-color: rgba(240,96,200,0.35); background: rgba(240,96,200,0.04); }
+  .advance-credit .advance-input-wrap:focus-within { border-color: var(--accent3); }
+  .advance-credit .advance-input, .advance-credit .currency-symbol { color: var(--accent3); }
+  .advance-total { display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border); padding-left: 12px; font-size: 11px; color: var(--text3); }
+  .advance-total strong { color: var(--accent); font-family: 'Syne', sans-serif; font-size: 15px; }
   .advance-hint { font-size: 11px; color: var(--text3); }
   .client-footer { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; }
   .footer-stat { text-align: right; }
@@ -233,7 +240,7 @@ function load() {
   if (S.month == null) S.month   = new Date().getMonth();
   if (S.year  == null) S.year    = new Date().getFullYear();
   if (S.updatedAt == null) S.updatedAt = 0;
-  S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.entries) c.entries=[]; });
+  S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.advanceCredits) c.advanceCredits={}; if (!c.entries) c.entries=[]; });
   if (!S.activeClient && S.clients.length > 0) S.activeClient = S.clients[0].id;
 }
 
@@ -247,8 +254,12 @@ const eMins  = e => { if(e.minutes!=null) return Math.round(Number(e.minutes))||
 const esc    = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function getRate(c)    { return (c.customRate!=null&&c.customRate>0)?Number(c.customRate):Number(S.defaultRate)||0; }
-function getAdv(c)     { return Number((c.advances||{})[''+S.year+'-'+S.month])||0; }
-function setAdv(c,v)   { if(!c.advances)c.advances={}; c.advances[''+S.year+'-'+S.month]=Number(v)||0; }
+function monthKey()    { return ''+S.year+'-'+S.month; }
+function getAdvancePaid(c)   { return Number((c.advances||{})[monthKey()])||0; }
+function setAdvancePaid(c,v) { if(!c.advances)c.advances={}; c.advances[monthKey()]=Number(v)||0; }
+function getAdvanceCredit(c) { return Number((c.advanceCredits||{})[monthKey()])||0; }
+function setAdvanceCredit(c,v){ if(!c.advanceCredits)c.advanceCredits={}; c.advanceCredits[monthKey()]=Number(v)||0; }
+function getAdv(c)     { return getAdvancePaid(c)+getAdvanceCredit(c); }
 function parseDate(str) {
   // parse YYYY-MM-DD directly to avoid UTC timezone shift on iOS
   const p = str ? str.split('-') : [];
@@ -277,8 +288,8 @@ function renderSummary() {
   const ac=S.clients.filter(c=>mEntries(c).some(e=>eMins(e)>0)).length;
   document.getElementById('summaryRow').innerHTML=
     '<div class="summary-card c-green"><div class="sc-label">Total Earned</div><div class="sc-value" style="color:var(--accent)">'+fmtINR(te)+'</div><div class="sc-sub">'+MONTHS[S.month]+' '+S.year+'</div></div>'+
-    '<div class="summary-card c-blue"><div class="sc-label">Advance</div><div class="sc-value" style="color:var(--accent2)">'+fmtINR(ta)+'</div><div class="sc-sub">received</div></div>'+
-    '<div class="summary-card c-pink"><div class="sc-label">To Collect</div><div class="sc-value" style="color:'+(nc<0?'var(--danger)':'var(--accent3)')+'">'+fmtINR(Math.abs(nc))+'</div><div class="sc-sub">'+(nc<0?'⚠ over-advance':'net of advance')+'</div></div>'+
+    '<div class="summary-card c-blue"><div class="sc-label">Advance</div><div class="sc-value" style="color:var(--accent2)">'+fmtINR(ta)+'</div><div class="sc-sub">paid + credit</div></div>'+
+    '<div class="summary-card c-pink"><div class="sc-label">To Collect</div><div class="sc-value" style="color:'+(nc<0?'var(--danger)':'var(--accent3)')+'">'+fmtINR(Math.abs(nc))+'</div><div class="sc-sub">'+(nc<0?'credit remaining':'net of advance')+'</div></div>'+
     '<div class="summary-card"><div class="sc-label">Total Time</div><div class="sc-value" style="color:var(--text2);font-size:18px">'+fmtHM(tm)+'</div><div class="sc-sub">'+ac+' client'+(ac!==1?'s':'')+'</div></div>';
 }
 
@@ -310,6 +321,8 @@ function renderPanel() {
 
   const mode  = getBillingMode(c);
   const rate  = getRate(c);
+  const advPaid   = getAdvancePaid(c);
+  const advCredit = getAdvanceCredit(c);
   const adv   = getAdv(c);
   const ents  = mEntries(c);
   const tMins = ents.reduce((s,e)=>s+eMins(e),0);
@@ -431,16 +444,27 @@ function renderPanel() {
       '<div class="add-row-area"><button class="add-row-btn" data-action="add-entry">＋ Add entry</button></div>'+
       '<div class="advance-row">'+
         '<span class="advance-label">💰 Advance</span>'+
-        '<div class="advance-input-wrap">'+
-          '<span style="color:var(--accent2);font-size:14px;">₹</span>'+
-          '<input type="text" inputmode="numeric" class="advance-input" placeholder="0" value="'+(adv||'')+'" data-action="advance">'+
+        '<div class="advance-field">'+
+          '<span class="advance-field-label">Paid now</span>'+
+          '<div class="advance-input-wrap">'+
+            '<span style="color:var(--accent2);font-size:14px;">₹</span>'+
+            '<input type="text" inputmode="numeric" class="advance-input" placeholder="0" value="'+(advPaid||'')+'" data-action="advance">'+
+          '</div>'+
         '</div>'+
-        '<span class="advance-hint">paid at month start</span>'+
+        '<div class="advance-field advance-credit">'+
+          '<span class="advance-field-label">Previous credit</span>'+
+          '<div class="advance-input-wrap">'+
+            '<span class="currency-symbol" style="font-size:14px;">₹</span>'+
+            '<input type="text" inputmode="numeric" class="advance-input" placeholder="0" value="'+(advCredit||'')+'" data-action="advance-credit">'+
+          '</div>'+
+        '</div>'+
+        '<div class="advance-total"><span>Total applied</span><strong id="advance-total">'+fmtINR(adv)+'</strong></div>'+
+        '<span class="advance-hint">cash received + prior balance</span>'+
       '</div>'+
       '<div class="client-footer">'+
         timeFooter+
         '<div class="footer-stat"><div class="footer-stat-label">'+earnLabel+'</div><div class="footer-stat-value" style="color:var(--text)">'+fmtINR(earn)+'</div></div>'+
-        '<div class="footer-stat"><div class="footer-stat-label">− Advance</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">− Applied</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
         '<div class="footer-stat"><div class="footer-stat-label">To Invoice</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
         '<button class="export-btn" data-action="export-client">&#11015; Export</button>'+
       '</div>'+
@@ -463,12 +487,24 @@ function updateFooterInPlace(c) {
   if (fn) { fn.textContent = fmtINR(net); fn.style.color = net<0?'var(--danger)':'var(--accent)'; }
 }
 
+function updateAdvanceInPlace(c) {
+  const adv = getAdv(c);
+  const earn = earned(c);
+  const net = earn - adv;
+  const total = document.getElementById('advance-total');
+  const fa = document.getElementById('ftr-adv');
+  const fn = document.getElementById('ftr-net');
+  if (total) total.textContent = fmtINR(adv);
+  if (fa) fa.textContent = fmtINR(adv);
+  if (fn) { fn.textContent = fmtINR(net); fn.style.color = net<0?'var(--danger)':'var(--accent)'; }
+}
+
 function openModal()  { document.getElementById('addModal').classList.add('open'); setTimeout(()=>document.getElementById('newClientName').focus(),80); }
 function closeModal() { document.getElementById('addModal').classList.remove('open'); }
 function confirmAdd() {
   const name=document.getElementById('newClientName').value.trim();
   if(!name){showToast('Enter a client name');return;}
-  const c={id:uid(),name,customRate:null,advances:{},entries:[]};
+  const c={id:uid(),name,customRate:null,advances:{},advanceCredits:{},entries:[]};
   S.clients.push(c); S.activeClient=c.id;
   closeModal(); save(); render();
 }
@@ -520,11 +556,11 @@ document.addEventListener('input', function(e) {
     return;
   }
   if(act==='advance'){
-    setAdv(c,el.value);save();renderSummary();
-    const adv=getAdv(c),earn=earned(c),net=earn-adv;
-    const fa=document.getElementById('ftr-adv'),fn=document.getElementById('ftr-net');
-    if(fa)fa.textContent=fmtINR(adv);
-    if(fn){fn.textContent=fmtINR(net);fn.style.color=net<0?'var(--danger)':'var(--accent)';}
+    setAdvancePaid(c,el.value);save();renderSummary();updateAdvanceInPlace(c);
+    return;
+  }
+  if(act==='advance-credit'){
+    setAdvanceCredit(c,el.value);save();renderSummary();updateAdvanceInPlace(c);
     return;
   }
   if(act==='edate'){
@@ -580,11 +616,11 @@ document.addEventListener('change', function(e) {
   }
 
   if(act==='advance'){
-    setAdv(c,el.value);save();renderSummary();
-    const adv=getAdv(c),earn=earned(c),net=earn-adv;
-    const fa=document.getElementById('ftr-adv'),fn=document.getElementById('ftr-net');
-    if(fa)fa.textContent=fmtINR(adv);
-    if(fn){fn.textContent=fmtINR(net);fn.style.color=net<0?'var(--danger)':'var(--accent)';}
+    setAdvancePaid(c,el.value);save();renderSummary();updateAdvanceInPlace(c);
+    return;
+  }
+  if(act==='advance-credit'){
+    setAdvanceCredit(c,el.value);save();renderSummary();updateAdvanceInPlace(c);
     return;
   }
 
@@ -702,14 +738,14 @@ function exportCSV(){
     }
     csv+='\n';
   });
-  csv+='\nSUMMARY\nClient,Billing Mode,Earned,Advance,Net to Invoice\n';
+  csv+='\nSUMMARY\nClient,Billing Mode,Earned,Paid Now,Previous Credit,Total Applied,Net to Invoice\n';
   let gE=0,gA=0;
   S.clients.forEach(c=>{
-    const earn=clientEarnedAmount(c),adv=getAdv(c);
+    const earn=clientEarnedAmount(c),paid=getAdvancePaid(c),credit=getAdvanceCredit(c),adv=getAdv(c);
     gE+=earn;gA+=adv;
-    csv+='"'+c.name+'",'+getBillingMode(c)+',Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+    csv+='"'+c.name+'",'+getBillingMode(c)+',Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
   });
-  csv+='\nGRAND TOTAL,,Rs'+gE.toFixed(2)+',Rs'+gA.toFixed(2)+',Rs'+(gE-gA).toFixed(2)+'\n';
+  csv+='\nGRAND TOTAL,,Rs'+gE.toFixed(2)+',,,Rs'+gA.toFixed(2)+',Rs'+(gE-gA).toFixed(2)+'\n';
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -726,6 +762,8 @@ function exportClientCSV(){
   const month=MONTHS[S.month];
   let csv='Arjun FL Hours Tracker - '+c.name+' ('+mode+') - '+month+' '+S.year+'\n\n';
   const rate=getRate(c);
+  const paid=getAdvancePaid(c);
+  const credit=getAdvanceCredit(c);
   const adv=getAdv(c);
   const earn=clientEarnedAmount(c);
   if(mode==='hourly'){
@@ -746,8 +784,8 @@ function exportClientCSV(){
       csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
     });
   }
-  csv+='\nSUMMARY\nEarned,Advance,Net to Invoice\n';
-  csv+='Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+  csv+='\nSUMMARY\nEarned,Paid Now,Previous Credit,Total Applied,Net to Invoice\n';
+  csv+='Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -881,7 +919,7 @@ const Cloud = {
         // Cloud is newer — adopt it.
         S = cloud;
         if (!S.clients) S.clients = [];
-        S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.entries) c.entries=[]; });
+        S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.advanceCredits) c.advanceCredits={}; if (!c.entries) c.entries=[]; });
         if (S.updatedAt == null) S.updatedAt = cloudTs;
         try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
         render();
