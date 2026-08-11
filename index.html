@@ -231,6 +231,16 @@ function save() {
   try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
   scheduleCloudPush();
 }
+function normalizeClient(c) {
+  if (!c.advances) c.advances={};
+  if (!c.advanceCredits) c.advanceCredits={};
+  if (!c.entries) c.entries=[];
+  if (c.billingMode === 'onetime' && c.oneTimeFee == null) {
+    const legacyTotal = c.entries.reduce((s,e)=>s+(Number(e.fixedAmt)||0),0);
+    if (legacyTotal > 0) c.oneTimeFee = legacyTotal;
+  }
+}
+
 function load() {
   try {
     const raw = localStorage.getItem('arjun_fl_v1') || localStorage.getItem('hours_tracker_v2') || localStorage.getItem('arjun_tracker_v1');
@@ -240,7 +250,7 @@ function load() {
   if (S.month == null) S.month   = new Date().getMonth();
   if (S.year  == null) S.year    = new Date().getFullYear();
   if (S.updatedAt == null) S.updatedAt = 0;
-  S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.advanceCredits) c.advanceCredits={}; if (!c.entries) c.entries=[]; });
+  S.clients.forEach(normalizeClient);
   if (!S.activeClient && S.clients.length > 0) S.activeClient = S.clients[0].id;
 }
 
@@ -309,7 +319,7 @@ function clientEarnedAmount(c) {
   const ents = mEntries(c);
   if (mode === 'hourly')   return ents.reduce((s,e) => s + toHrs(eMins(e)) * getRate(c), 0);
   if (mode === 'monthly')  return Number(c.monthlyFee) || 0;
-  if (mode === 'onetime')  return ents.reduce((s,e) => s + (Number(e.fixedAmt)||0), 0);
+  if (mode === 'onetime')  return Number(c.oneTimeFee) || 0;
   return 0;
 }
 
@@ -358,11 +368,12 @@ function renderPanel() {
         timeCell='<div class="hm-wrap">'+hrSel+'<span class="hm-sep">h</span>'+minSel+'<span class="hm-sep">m</span></div>';
         amtCell='<span style="color:var(--text3);font-size:11px;">ref only</span>';
       } else if(mode==='onetime'){
-        timeCell='<span style="color:var(--text3);font-size:12px;">—</span>';
-        amtCell='<div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">'+
-          '<span style="color:var(--accent);font-size:13px;">₹</span>'+
-          '<input type="text" inputmode="numeric" class="notes-input" style="color:var(--accent);width:80px;font-weight:500;" placeholder="amount" value="'+(e.fixedAmt||'')+'" data-action="efixedamt" data-eid="'+e.id+'">'+
-          '</div>';
+        const hrSel='<select class="time-select" data-action="ehr" data-eid="'+e.id+'">'+
+          hrOpts.map(h=>'<option value="'+h+'"'+(h===eH?' selected':'')+'>'+h+'</option>').join('')+'</select>';
+        const minSel='<select class="time-select" data-action="emin" data-eid="'+e.id+'">'+
+          minOpts.map(m=>'<option value="'+m+'"'+(m===eM?' selected':'')+'>'+String(m).padStart(2,'0')+'</option>').join('')+'</select>';
+        timeCell='<div class="hm-wrap">'+hrSel+'<span class="hm-sep">h</span>'+minSel+'<span class="hm-sep">m</span></div>';
+        amtCell='<span style="color:var(--text3);font-size:11px;">fixed fee</span>';
       }
 
       rows+='<tr class="entry-row" data-eid="'+e.id+'">'+
@@ -412,17 +423,25 @@ function renderPanel() {
         '</div>'+
       '</div>';
   } else if(mode==='onetime'){
-    modeConfigHtml = '<span style="font-size:11px;color:var(--text3);">Add each payment as a separate entry with amount</span>';
+    modeConfigHtml =
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+        '<span style="font-size:11px;color:var(--text3);">Agreed Amount</span>'+
+        '<div class="client-custom-rate" style="border-color:rgba(240,96,200,0.35);background:rgba(240,96,200,0.04);">'+
+          '<span style="color:var(--accent3);font-size:12px;">₹</span>'+
+          '<input type="text" inputmode="numeric" placeholder="0" value="'+(c.oneTimeFee||'')+'" data-action="one-time-fee" style="background:none;border:none;color:var(--accent3);font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;width:110px;outline:none;">'+
+          '<span style="font-size:11px;color:var(--text3);">total</span>'+
+        '</div>'+
+        '<span style="font-size:11px;color:var(--text3);">log hours as work happens</span>'+
+      '</div>';
   }
 
   // footer earned label varies by mode
-  const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Total Payments';
-  const timeFooter = mode!=='onetime' ?
-    '<div class="footer-stat"><div class="footer-stat-label">Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>' : '';
+  const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Agreed Amount';
+  const timeFooter = '<div class="footer-stat"><div class="footer-stat-label">Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>';
 
   // table header varies
-  const thTime = mode==='onetime' ? '<th>—</th>' : '<th>Time</th>';
-  const thAmt  = mode==='onetime' ? '<th>Payment</th>' : '<th>Amount</th>';
+  const thTime = '<th>Time</th>';
+  const thAmt  = mode==='onetime' ? '<th>Fee</th>' : '<th>Amount</th>';
 
   panel.innerHTML=
     '<div class="client-panel">'+
@@ -551,7 +570,7 @@ document.addEventListener('input', function(e) {
   if(!c) return;
   if(act==='cname')  {c.name=el.value||'Client';save();renderTabs();return;}
   if(act==='crate')  {c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'||act==='efixedamt'){
+  if(act==='monthly-fee'||act==='one-time-fee'||act==='efixedamt'){
     // do nothing on input — save on blur only to prevent iOS keyboard dismissal
     return;
   }
@@ -610,7 +629,7 @@ document.addEventListener('change', function(e) {
   if(!c) return;
 
   if(act==='crate'){c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'||act==='efixedamt'){
+  if(act==='monthly-fee'||act==='one-time-fee'||act==='efixedamt'){
     // handled on blur only
     return;
   }
@@ -664,6 +683,11 @@ document.addEventListener('blur', function(e) {
     save(); renderSummary(); updateFooterInPlace(c);
     return;
   }
+  if (act === 'one-time-fee') {
+    c.oneTimeFee = Number(el.value.replace(/[^0-9.]/g,'')) || 0;
+    save(); renderSummary(); updateFooterInPlace(c);
+    return;
+  }
   if (act === 'efixedamt') {
     const entry = c.entries.find(x => x.id === el.dataset.eid);
     if (!entry) return;
@@ -687,9 +711,7 @@ function addEntry(){
   const mode=getBillingMode(c);
   c.entries.push({id:uid(),date:today(),minutes:0,notes:'',fixedAmt:0});
   save();renderPanel();renderSummary();
-  if(mode!=='onetime'){
-    setTimeout(()=>{const ins=document.querySelectorAll('[data-action="ehr"]');if(ins.length)ins[ins.length-1].focus();},50);
-  }
+  setTimeout(()=>{const ins=document.querySelectorAll('[data-action="ehr"]');if(ins.length)ins[ins.length-1].focus();},50);
 }
 function delEntry(eid){
   const c=S.clients.find(x=>x.id===S.activeClient);
@@ -731,9 +753,10 @@ function exportCSV(){
         csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
       });
     } else if(mode==='onetime'){
-      csv+='Date,Payment,Description\n';
+      csv+='Agreed Amount: Rs'+(c.oneTimeFee||0)+'\n';
+      csv+='Date,Time (logged),Notes\n';
       mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-        csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
+        csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
       });
     }
     csv+='\n';
@@ -779,9 +802,10 @@ function exportClientCSV(){
       csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
     });
   } else if(mode==='onetime'){
-    csv+='Date,Payment,Description\n';
+    csv+='Agreed Amount: Rs'+(c.oneTimeFee||0)+'\n';
+    csv+='Date,Time (logged),Notes\n';
     mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-      csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
+      csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
     });
   }
   csv+='\nSUMMARY\nEarned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
@@ -919,7 +943,7 @@ const Cloud = {
         // Cloud is newer — adopt it.
         S = cloud;
         if (!S.clients) S.clients = [];
-        S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.advanceCredits) c.advanceCredits={}; if (!c.entries) c.entries=[]; });
+        S.clients.forEach(normalizeClient);
         if (S.updatedAt == null) S.updatedAt = cloudTs;
         try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
         render();
