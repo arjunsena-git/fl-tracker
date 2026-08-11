@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <title>Arjun FL Hours Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #0f0f11; --surface: #17171a; --surface2: #1e1e23;
@@ -78,8 +79,6 @@
   .client-custom-rate input { background: none; border: none; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 70px; outline: none; }
   .delete-client-btn { background: none; border: 1px solid var(--border); color: var(--text3); font-size: 13px; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .delete-client-btn:active { border-color: var(--danger); color: var(--danger); }
-  .export-client-btn { background: rgba(240,96,200,0.08); border: 1px solid rgba(240,96,200,0.4); color: var(--accent3); font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
-  .export-client-btn:active { background: rgba(240,96,200,0.18); }
   .log-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .log-table { width: 100%; border-collapse: collapse; min-width: 400px; }
   .log-table th { padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 400; }
@@ -145,12 +144,25 @@
   /* sync indicator */
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-left: 8px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  /* cloud sync */
+  .sync-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
+  .sync-btn:active { opacity: 0.7; }
+  .sync-btn .cloud-icon { font-size: 15px; line-height: 1; }
+  .sync-btn.syncing .cloud-icon { animation: spin 0.8s linear infinite; }
+  .sync-btn.synced { border-color: var(--accent); color: var(--accent); }
+  .sync-btn.error { border-color: var(--danger); color: var(--danger); }
+  .sync-btn.off { border-color: var(--border); color: var(--text3); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sync-label { font-size: 11px; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="logo">Arjun <span>FL</span> Tracker</div>
+    <button class="sync-btn off" id="syncBtn" title="Sync with Google Drive">
+      <span class="cloud-icon">☁</span><span class="sync-label" id="syncLabel">Not signed in</span>
+    </button>
     <div class="month-nav">
       <button id="btnPrev">&#8249;</button>
       <div class="month-label" id="monthLabel"></div>
@@ -197,10 +209,20 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const SHORT   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DOTS    = ['#c8f060','#60c8f0','#f060c8','#f0c060','#60f0a0','#f09060'];
 
-let S = { defaultRate:0, month:new Date().getMonth(), year:new Date().getFullYear(), activeClient:null, clients:[] };
+let S = { defaultRate:0, month:new Date().getMonth(), year:new Date().getFullYear(), activeClient:null, clients:[], updatedAt:0 };
+
+// ── Cloud sync config ─────────────────────────────────────────────────────────
+// Replace with your own OAuth Client ID from Google Cloud Console (see README).
+// Authorized JS origins must include the exact origin where this is hosted (e.g. https://your-site.netlify.app).
+const GDRIVE_CLIENT_ID = '968068632821-fg9pgqsjhu0h2t24hedlfgm5rlsrb7r0.apps.googleusercontent.com';
+const DRIVE_STATE_FILE = 'fl-tracker-state.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const LS_FILEID_KEY = 'arjun_fl_drive_fileid';
 
 function save() {
+  S.updatedAt = Date.now();
   try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
+  scheduleCloudPush();
 }
 function load() {
   try {
@@ -210,6 +232,7 @@ function load() {
   if (!S.clients)      S.clients = [];
   if (S.month == null) S.month   = new Date().getMonth();
   if (S.year  == null) S.year    = new Date().getFullYear();
+  if (S.updatedAt == null) S.updatedAt = 0;
   S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.entries) c.entries=[]; });
   if (!S.activeClient && S.clients.length > 0) S.activeClient = S.clients[0].id;
 }
@@ -395,10 +418,7 @@ function renderPanel() {
           '<div class="client-dot" style="background:'+dot+'"></div>'+
           '<input type="text" class="client-name-input" value="'+esc(c.name)+'" maxlength="30" data-action="cname">'+
         '</div>'+
-        '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<button class="export-client-btn" data-action="export-client">&#11015; Export</button>'+
         '<button class="delete-client-btn" data-action="del-client">🗑</button>'+
-        '</div>'+
       '</div>'+
       '<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;gap:10px;">'+
         modeHtml+
@@ -422,6 +442,7 @@ function renderPanel() {
         '<div class="footer-stat"><div class="footer-stat-label">'+earnLabel+'</div><div class="footer-stat-value" style="color:var(--text)">'+fmtINR(earn)+'</div></div>'+
         '<div class="footer-stat"><div class="footer-stat-label">− Advance</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
         '<div class="footer-stat"><div class="footer-stat-label">To Invoice</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
+        '<button class="export-btn" data-action="export-client">&#11015; Export</button>'+
       '</div>'+
     '</div>';
 }
@@ -474,7 +495,7 @@ document.addEventListener('click', function(e) {
   if(act==='del-entry')   {delEntry(el.dataset.eid);return;}
   if(act==='add-entry')   {addEntry();return;}
   if(act==='del-client')  {delClient();return;}
-  if(act==='export-client'){const c=S.clients.find(x=>x.id===S.activeClient);if(c)exportClientCSV(c);return;}
+  if(act==='export-client'){exportClientCSV();return;}
   if(act==='toggle-rate') {toggleRate();return;}
   if(act==='set-mode')    {
     const c=S.clients.find(x=>x.id===S.activeClient);
@@ -654,42 +675,6 @@ function toggleRate(){
   save();renderPanel();renderSummary();
 }
 
-function exportClientCSV(c){
-  const month=MONTHS[S.month];
-  const mode=getBillingMode(c);
-  let csv='FL Tracker - '+c.name+' - '+month+' '+S.year+'\n\n';
-  csv+='"'+c.name+'" ('+mode+')\n';
-  if(mode==='hourly'){
-    csv+='Date,Time,Decimal Hours,Rate,Amount,Notes\n';
-    const rate=getRate(c);
-    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-      const m=eMins(e);
-      csv+='"'+e.date+'","'+fmtHM(m)+'",'+toHrs(m).toFixed(2)+','+rate+','+(toHrs(m)*rate).toFixed(2)+',"'+(e.notes||'')+'"\n';
-    });
-  } else if(mode==='monthly'){
-    csv+='Monthly Fee: Rs'+(c.monthlyFee||0)+'\n';
-    csv+='Date,Time (ref),Notes\n';
-    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-      csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
-    });
-  } else if(mode==='onetime'){
-    csv+='Date,Payment,Description\n';
-    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-      csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
-    });
-  }
-  const earn=clientEarnedAmount(c),adv=getAdv(c),net=earn-adv;
-  csv+='\nSUMMARY\nBilling Mode,Earned,Advance,To Invoice\n';
-  csv+=mode+',Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+net.toFixed(2)+'\n';
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  const safeName=c.name.replace(/[^a-z0-9]/gi,'_').toLowerCase();
-  a.download=safeName+'_'+month+'_'+S.year+'.csv';
-  a.click();
-  showToast(c.name+' exported!');
-}
-
 function exportCSV(){
   const month=MONTHS[S.month];
   let csv='Arjun FL Hours Tracker - '+month+' '+S.year+'\n\n';
@@ -733,15 +718,244 @@ function exportCSV(){
   showToast('CSV exported!');
 }
 
+// Export only the currently active client's data for the displayed month.
+function exportClientCSV(){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c){showToast('No client selected');return;}
+  const mode=getBillingMode(c);
+  const month=MONTHS[S.month];
+  let csv='Arjun FL Hours Tracker - '+c.name+' ('+mode+') - '+month+' '+S.year+'\n\n';
+  const rate=getRate(c);
+  const adv=getAdv(c);
+  const earn=clientEarnedAmount(c);
+  if(mode==='hourly'){
+    csv+='Date,Time,Decimal Hours,Rate,Amount,Notes\n';
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const m=eMins(e);
+      csv+='"'+e.date+'","'+fmtHM(m)+'",'+toHrs(m).toFixed(2)+','+rate+','+(toHrs(m)*rate).toFixed(2)+',"'+(e.notes||'')+'"\n';
+    });
+  } else if(mode==='monthly'){
+    csv+='Monthly Fee: Rs'+(c.monthlyFee||0)+'\n';
+    csv+='Date,Time (ref),Notes\n';
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
+    });
+  } else if(mode==='onetime'){
+    csv+='Date,Payment,Description\n';
+    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
+    });
+  }
+  csv+='\nSUMMARY\nEarned,Advance,Net to Invoice\n';
+  csv+='Rs'+earn.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=c.name.replace(/[^a-z0-9]+/gi,'_')+'_'+month+'_'+S.year+'.csv';
+  a.click();
+  showToast('Exported '+c.name);
+}
+
+// ── Google Drive cloud sync (appDataFolder, last-write-wins) ─────────────────
+const Cloud = {
+  token: null,
+  tokenExpiry: 0,
+  tokenClient: null,
+  fileId: localStorage.getItem(LS_FILEID_KEY) || null,
+  busy: false,
+  pushTimer: null,
+
+  ready() { return GDRIVE_CLIENT_ID && GDRIVE_CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com'; },
+
+  initGis() {
+    if (this.tokenClient || !window.google || !google.accounts) return;
+    this.tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: () => {} // set per-request
+    });
+  },
+
+  // Get a valid access token. silent=true reuses cached token; false may prompt.
+  getToken(silent = true) {
+    this.initGis();
+    if (!this.tokenClient) return Promise.reject(new Error('GIS not loaded'));
+    const now = Date.now();
+    if (this.token && this.tokenExpiry > now + 5000) return Promise.resolve(this.token);
+    return new Promise((resolve, reject) => {
+      this.tokenClient.callback = (resp) => {
+        if (resp.error || !resp.access_token) { reject(new Error(resp.error_description || resp.error || 'Auth failed')); return; }
+        this.token = resp.access_token;
+        this.tokenExpiry = now + (resp.expires_in ? resp.expires_in * 1000 : 3300000);
+        resolve(this.token);
+      };
+      this.tokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
+    });
+  },
+
+  async authHeaders() {
+    // silent=true reuses cached token / silent consent grant — avoids forcing
+    // the Google consent popup on every launch. Only the manual ☁ button and
+    // error-retry paths should force a fresh consent prompt.
+    const tok = await this.getToken(true);
+    return { 'Authorization': 'Bearer ' + tok };
+  },
+
+  setUI(state, label) {
+    const btn = document.getElementById('syncBtn');
+    const lbl = document.getElementById('syncLabel');
+    if (!btn) return;
+    btn.classList.remove('syncing','synced','error','off');
+    btn.classList.add(state);
+    if (lbl && label) lbl.textContent = label;
+  },
+
+  // Find existing state file in appDataFolder, return {id, modifiedTime}
+  async findFile() {
+    const q = encodeURIComponent("name='" + DRIVE_STATE_FILE + "' and trashed=false");
+    const url = 'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' + q + '&fields=files(id,modifiedTime)';
+    const r = await fetch(url, { headers: await this.authHeaders() });
+    if (!r.ok) throw new Error('Drive list failed: ' + r.status);
+    const data = await r.json();
+    return data.files && data.files[0] ? data.files[0] : null;
+  },
+
+  // Download cloud state. Returns parsed object or null.
+  async download(fileId) {
+    const r = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', { headers: await this.authHeaders() });
+    if (!r.ok) throw new Error('Drive download failed: ' + r.status);
+    return r.json();
+  },
+
+  // Create or update the state file with current S.
+  async upload() {
+    const body = JSON.stringify(S);
+    // Resolve fileId if missing (or if cached id no longer exists).
+    if (!this.fileId) {
+      const f = await this.findFile();
+      if (f) this.fileId = f.id;
+    }
+    let r;
+    if (this.fileId) {
+      // update existing file content only (media upload)
+      r = await fetch('https://www.googleapis.com/upload/drive/v3/files/' + this.fileId + '?uploadType=media', {
+        method: 'PATCH', headers: { ...(await this.authHeaders()), 'Content-Type': 'application/json' }, body
+      });
+      if (r.status === 404) { // file was deleted remotely — reset and create fresh
+        this.fileId = null; localStorage.removeItem(LS_FILEID_KEY);
+        return this.upload();
+      }
+    } else {
+      // create new file in appDataFolder via multipart
+      const boundary = 'fl' + Date.now();
+      const part = (ctype, content) => '--' + boundary + '\r\nContent-Type: ' + ctype + '\r\n\r\n' + content + '\r\n';
+      const multipart = part('application/json; charset=UTF-8', JSON.stringify({ name: DRIVE_STATE_FILE, parents: ['appDataFolder'] })) + part('application/json', body) + '--' + boundary + '--';
+      r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST', headers: { ...(await this.authHeaders()), 'Content-Type': 'multipart/related; boundary=' + boundary }, body: multipart
+      });
+    }
+    if (!r.ok) throw new Error('Drive upload failed: ' + r.status);
+    const data = await r.json();
+    if (data.id) { this.fileId = data.id; localStorage.setItem(LS_FILEID_KEY, data.id); }
+  },
+
+  // Pull cloud state and reconcile using updatedAt (last-write-wins).
+  async pull() {
+    if (!this.ready()) { this.setUI('off', 'Not configured'); return; }
+    if (this.busy) return;
+    this.busy = true;
+    this.setUI('syncing', 'Syncing…');
+    try {
+      const f = await this.findFile();
+      if (!f) {
+        // No cloud file yet — push current state up (first device).
+        await this.upload();
+        this.setUI('synced', 'Cloud ready');
+        return;
+      }
+      this.fileId = f.id; localStorage.setItem(LS_FILEID_KEY, f.id);
+      const cloud = await this.download(f.id);
+      const cloudTs = cloud.updatedAt || 0;
+      const localTs = S.updatedAt || 0;
+      if (cloudTs > localTs) {
+        // Cloud is newer — adopt it.
+        S = cloud;
+        if (!S.clients) S.clients = [];
+        S.clients.forEach(c => { if (!c.advances) c.advances={}; if (!c.entries) c.entries=[]; });
+        if (S.updatedAt == null) S.updatedAt = cloudTs;
+        try { localStorage.setItem('arjun_fl_v1', JSON.stringify(S)); } catch(e){}
+        render();
+        showToast('Synced from cloud');
+        this.setUI('synced', 'Synced');
+      } else {
+        // Local is newer or equal — push up.
+        await this.upload();
+        this.setUI('synced', 'Synced');
+      }
+    } catch (e) {
+      this.setUI('error', 'Sync error');
+      console.warn('Cloud pull failed:', e.message);
+    } finally {
+      this.busy = false;
+    }
+  },
+
+  // Debounced push triggered by save().
+  schedulePush() {
+    if (!this.ready()) return;
+    clearTimeout(this.pushTimer);
+    this.pushTimer = setTimeout(() => this.push(), 2500);
+  },
+
+  // Push current state up (used by debounced save + manual button).
+  async push() {
+    if (!this.ready()) return;
+    if (this.busy) { this.schedulePush(); return; }
+    this.busy = true;
+    this.setUI('syncing', 'Saving…');
+    try {
+      await this.upload();
+      this.setUI('synced', 'Synced');
+    } catch (e) {
+      // Token may have expired mid-session — retry once with fresh consent.
+      this.token = null; this.tokenExpiry = 0;
+      try { await this.upload(); this.setUI('synced', 'Synced'); }
+      catch (e2) { this.setUI('error', 'Sync error'); console.warn('Cloud push failed:', e2.message); }
+    } finally {
+      this.busy = false;
+    }
+  }
+};
+function scheduleCloudPush() { Cloud.schedulePush(); }
+
 // ── Service Worker registration ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fl-tracker/sw.js', {scope: '/fl-tracker/'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js', {scope: './'}).catch(()=>{});
   });
 }
 
 load();
 render();
+
+// ── Cloud sync wiring ─────────────────────────────────────────────────────────
+if (Cloud.ready()) {
+  Cloud.setUI('off', 'Tap to sync');
+  // initial pull shortly after load (gives GIS time to load)
+  setTimeout(() => Cloud.pull().catch(()=>{}), 1200);
+} else {
+  Cloud.setUI('off', 'Not configured');
+}
+document.getElementById('syncBtn').addEventListener('click', () => {
+  if (!Cloud.ready()) { showToast('Set GDRIVE_CLIENT_ID in index.html'); return; }
+  Cloud.pull().catch(()=>{});
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Cloud.ready()) {
+    Cloud.pull().catch(()=>{});
+  }
+});
+
 </script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-const CACHE = 'arjun-fl-v10';
+const CACHE = 'arjun-fl-v13';
 const ASSETS = [
-  '/fl-tracker/',
-  '/fl-tracker/index.html',
-  '/fl-tracker/manifest.json',
-  '/fl-tracker/icon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png'
 ];
 
 self.addEventListener('install', e => {
@@ -23,11 +23,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (!e.request.url.includes('/fl-tracker/')) return;
+  // only handle requests within our scope
+  if (!e.request.url.includes(location.origin)) return;
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
-      return fetch(e.request).catch(() => caches.match('/fl-tracker/index.html'));
+      return fetch(e.request).catch(() => caches.match('./index.html'));
     })
   );
 });
