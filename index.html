@@ -288,8 +288,8 @@ function renderSummary() {
   const ac=S.clients.filter(c=>mEntries(c).some(e=>eMins(e)>0)).length;
   document.getElementById('summaryRow').innerHTML=
     '<div class="summary-card c-green"><div class="sc-label">Total Earned</div><div class="sc-value" style="color:var(--accent)">'+fmtINR(te)+'</div><div class="sc-sub">'+MONTHS[S.month]+' '+S.year+'</div></div>'+
-    '<div class="summary-card c-blue"><div class="sc-label">Advance</div><div class="sc-value" style="color:var(--accent2)">'+fmtINR(ta)+'</div><div class="sc-sub">paid + credit</div></div>'+
-    '<div class="summary-card c-pink"><div class="sc-label">To Collect</div><div class="sc-value" style="color:'+(nc<0?'var(--danger)':'var(--accent3)')+'">'+fmtINR(Math.abs(nc))+'</div><div class="sc-sub">'+(nc<0?'credit remaining':'net of advance')+'</div></div>'+
+    '<div class="summary-card c-blue"><div class="sc-label">Advance Covered</div><div class="sc-value" style="color:var(--accent2)">'+fmtINR(ta)+'</div><div class="sc-sub">cash + adjustment</div></div>'+
+    '<div class="summary-card c-pink"><div class="sc-label">'+(nc<0?'Covered Balance':'To Collect')+'</div><div class="sc-value" style="color:'+(nc<0?'var(--danger)':'var(--accent3)')+'">'+fmtINR(Math.abs(nc))+'</div><div class="sc-sub">'+(nc<0?'advance still available':'net of advance')+'</div></div>'+
     '<div class="summary-card"><div class="sc-label">Total Time</div><div class="sc-value" style="color:var(--text2);font-size:18px">'+fmtHM(tm)+'</div><div class="sc-sub">'+ac+' client'+(ac!==1?'s':'')+'</div></div>';
 }
 
@@ -452,19 +452,19 @@ function renderPanel() {
           '</div>'+
         '</div>'+
         '<div class="advance-field advance-credit">'+
-          '<span class="advance-field-label">Previous credit</span>'+
+          '<span class="advance-field-label">Old payable adjusted</span>'+
           '<div class="advance-input-wrap">'+
             '<span class="currency-symbol" style="font-size:14px;">₹</span>'+
             '<input type="text" inputmode="numeric" class="advance-input" placeholder="0" value="'+(advCredit||'')+'" data-action="advance-credit">'+
           '</div>'+
         '</div>'+
-        '<div class="advance-total"><span>Total applied</span><strong id="advance-total">'+fmtINR(adv)+'</strong></div>'+
-        '<span class="advance-hint">cash received + prior balance</span>'+
+        '<div class="advance-total"><span>Advance covered</span><strong id="advance-total">'+fmtINR(adv)+'</strong></div>'+
+        '<span class="advance-hint">cash received + amount you owed client</span>'+
       '</div>'+
       '<div class="client-footer">'+
         timeFooter+
         '<div class="footer-stat"><div class="footer-stat-label">'+earnLabel+'</div><div class="footer-stat-value" style="color:var(--text)">'+fmtINR(earn)+'</div></div>'+
-        '<div class="footer-stat"><div class="footer-stat-label">− Applied</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">− Covered</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
         '<div class="footer-stat"><div class="footer-stat-label">To Invoice</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
         '<button class="export-btn" data-action="export-client">&#11015; Export</button>'+
       '</div>'+
@@ -738,7 +738,7 @@ function exportCSV(){
     }
     csv+='\n';
   });
-  csv+='\nSUMMARY\nClient,Billing Mode,Earned,Paid Now,Previous Credit,Total Applied,Net to Invoice\n';
+  csv+='\nSUMMARY\nClient,Billing Mode,Earned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
   let gE=0,gA=0;
   S.clients.forEach(c=>{
     const earn=clientEarnedAmount(c),paid=getAdvancePaid(c),credit=getAdvanceCredit(c),adv=getAdv(c);
@@ -784,7 +784,7 @@ function exportClientCSV(){
       csv+='"'+e.date+'",Rs'+(e.fixedAmt||0)+',"'+(e.notes||'')+'"\n';
     });
   }
-  csv+='\nSUMMARY\nEarned,Paid Now,Previous Credit,Total Applied,Net to Invoice\n';
+  csv+='\nSUMMARY\nEarned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
   csv+='Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
