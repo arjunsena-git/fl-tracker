@@ -564,7 +564,10 @@ function renderPanel() {
 
   // footer earned label varies by mode
   const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Total Agreed';
-  const timeFooter = '<div class="footer-stat"><div class="footer-stat-label">'+(mode==='onetime'?'Total Time':'Time')+'</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(mode==='onetime'?allTimeMins:tMins)+'</div></div>';
+  const timeFooter = mode==='onetime' ?
+    '<div class="footer-stat"><div class="footer-stat-label">'+SHORT[S.month]+' Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>'+
+    '<div class="footer-stat"><div class="footer-stat-label">Till Date</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(allTimeMins)+'</div></div>' :
+    '<div class="footer-stat"><div class="footer-stat-label">Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>';
 
   // table header varies
   const thTime = '<th>Time</th>';
