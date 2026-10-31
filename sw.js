@@ -1,4 +1,4 @@
-const CACHE = 'arjun-fl-v17';
+const CACHE = 'arjun-fl-v18';
 const ASSETS = [
   './',
   './index.html',

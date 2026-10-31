@@ -157,7 +157,8 @@
   .mini-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; height: 30px; cursor: pointer; font-size: 15px; }
   .mini-btn.add { border-color: var(--accent2); color: var(--accent2); }
   .party-add-btn { margin-top: 10px; background: rgba(200,240,96,0.08); border: 1px solid var(--accent); color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
-  .legacy-payments { margin-top: 10px; color: var(--text3); font-size: 10px; }
+  .legacy-payments { margin-top: 10px; color: var(--text3); font-size: 10px; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+  .legacy-payments input { accent-color: var(--accent2); }
   .engagement-totals { display: grid; grid-template-columns: repeat(3,minmax(110px,1fr)); gap: 8px; margin-top: 12px; }
   .engagement-total { border-top: 1px solid var(--border); padding-top: 8px; }
   .engagement-total span { color: var(--text3); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; display: block; }
@@ -334,11 +335,12 @@ function getOneTimeAgreed(c) {
 }
 function getPartyPaid(p) { return (p.payments||[]).reduce((s,x)=>s+(Number(x.amount)||0),0); }
 function getOneTimePaid(c) {
-  return getLegacyAdvanceTotal(c)+(c.oneTimeParties||[]).reduce((s,p)=>s+getPartyPaid(p),0);
+  const legacy=c.includeLegacyOneTimeAdvances?getLegacyAdvanceTotal(c):0;
+  return legacy+(c.oneTimeParties||[]).reduce((s,p)=>s+getPartyPaid(p),0);
 }
 function getOneTimePaidThisMonth(c) {
   const ledger=(c.oneTimeParties||[]).reduce((s,p)=>s+(p.payments||[]).filter(paymentInMonth).reduce((a,x)=>a+(Number(x.amount)||0),0),0);
-  return getAdv(c)+ledger;
+  return (c.includeLegacyOneTimeAdvances?getAdv(c):0)+ledger;
 }
 function getPeriodCovered(c) {
   if(getBillingMode(c)!=='onetime') return getAdv(c);
@@ -446,7 +448,7 @@ function renderOneTimeLedger(c) {
     '</div>'+
     '<div class="party-list">'+(partyHtml||'<div style="color:var(--text3);font-size:11px;">Add a participant or fee group to begin.</div>')+'</div>'+
     '<button class="party-add-btn" data-action="add-party">＋ Add participant / fee group</button>'+
-    (legacy>0?'<div class="legacy-payments">Existing monthly advance records are preserved and included: '+fmtINR(legacy)+'</div>':'')+
+    (legacy>0?'<label class="legacy-payments"><input type="checkbox" data-action="include-legacy-advances"'+(c.includeLegacyOneTimeAdvances?' checked':'')+'> Existing monthly advance records preserved: '+fmtINR(legacy)+' — include in engagement totals</label>':'')+
     '<div class="engagement-totals">'+
       '<div class="engagement-total"><span>Total agreed</span><strong>'+fmtINR(agreed)+'</strong></div>'+
       '<div class="engagement-total"><span>Total received / adjusted</span><strong style="color:var(--accent2)">'+fmtINR(paid)+'</strong></div>'+
@@ -775,6 +777,11 @@ document.addEventListener('change', function(e) {
     save();renderPanel();
     return;
   }
+  if(act==='include-legacy-advances'){
+    c.includeLegacyOneTimeAdvances=el.checked;
+    save();renderSummary();renderPanel();
+    return;
+  }
 
   if(act==='advance'){
     setAdvancePaid(c,el.value);save();renderSummary();updateAdvanceInPlace(c);
@@ -963,6 +970,7 @@ function exportCSV(){
       csv+='Total Agreed,Rs'+agreed.toFixed(2)+'\n';
       csv+='Total Received / Adjusted,Rs'+received.toFixed(2)+'\n';
       csv+='Remaining,Rs'+(agreed-received).toFixed(2)+'\n\n';
+      csv+='Preserved Legacy Advances,Rs'+getLegacyAdvanceTotal(c).toFixed(2)+','+(c.includeLegacyOneTimeAdvances?'Included':'Excluded')+'\n\n';
       csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
       (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
       csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
@@ -1021,6 +1029,7 @@ function exportClientCSV(){
     csv+='Total Agreed,Rs'+earn.toFixed(2)+'\n';
     csv+='Total Received / Adjusted,Rs'+paid.toFixed(2)+'\n';
     csv+='Remaining,Rs'+(earn-paid).toFixed(2)+'\n\n';
+    csv+='Preserved Legacy Advances,Rs'+getLegacyAdvanceTotal(c).toFixed(2)+','+(c.includeLegacyOneTimeAdvances?'Included':'Excluded')+'\n\n';
     csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
     (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
     csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
