@@ -995,7 +995,6 @@ function exportCSV(){
       csv+='Total Agreed,Rs'+agreed.toFixed(2)+'\n';
       csv+='Total Received / Adjusted,Rs'+received.toFixed(2)+'\n';
       csv+='Remaining,Rs'+(agreed-received).toFixed(2)+'\n\n';
-      csv+='Preserved Legacy Advances,Rs'+getLegacyAdvanceTotal(c).toFixed(2)+','+(c.includeLegacyOneTimeAdvances?'Included':'Excluded')+'\n\n';
       csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
       (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
       csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
@@ -1055,7 +1054,6 @@ function exportClientCSV(){
     csv+='Total Agreed,Rs'+earn.toFixed(2)+'\n';
     csv+='Total Received / Adjusted,Rs'+paid.toFixed(2)+'\n';
     csv+='Remaining,Rs'+(earn-paid).toFixed(2)+'\n\n';
-    csv+='Preserved Legacy Advances,Rs'+getLegacyAdvanceTotal(c).toFixed(2)+','+(c.includeLegacyOneTimeAdvances?'Included':'Excluded')+'\n\n';
     csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
     (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
     csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
