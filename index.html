@@ -947,6 +947,28 @@ function exportBackupJSON(){
   showToast('Full data backup downloaded');
 }
 
+function oneTimeTimeSummaryCSV(c){
+  const byMonth={};
+  (c.entries||[]).forEach(e=>{
+    const p=parseDate(e.date);
+    if(!Number.isFinite(p.y)||!Number.isFinite(p.m)) return;
+    const key=p.y+'-'+String(p.m+1).padStart(2,'0');
+    if(!byMonth[key]) byMonth[key]={minutes:0,sessions:0};
+    byMonth[key].minutes+=eMins(e);
+    byMonth[key].sessions++;
+  });
+  let totalMinutes=0,totalSessions=0;
+  let csv='TIME SUMMARY\nMonth,Sessions,Time Logged\n';
+  Object.keys(byMonth).sort().forEach(key=>{
+    const parts=key.split('-'), label=MONTHS[Number(parts[1])-1]+' '+parts[0];
+    const row=byMonth[key];
+    totalMinutes+=row.minutes;totalSessions+=row.sessions;
+    csv+='"'+label+'",'+row.sessions+',"'+fmtHM(row.minutes)+'"\n';
+  });
+  csv+='"Till Date",'+totalSessions+',"'+fmtHM(totalMinutes)+'"\n\n';
+  return csv;
+}
+
 function exportCSV(){
   const month=MONTHS[S.month];
   let csv='Arjun FL Hours Tracker - '+month+' '+S.year+'\n\n';
@@ -978,7 +1000,8 @@ function exportCSV(){
       (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
       csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
       (c.oneTimeParties||[]).forEach(p=>(p.payments||[]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{csv+='"'+(p.name||'')+'","'+(x.date||'')+'",Rs'+(Number(x.amount)||0).toFixed(2)+',"'+(x.note||'')+'"\n';}));
-      csv+='\nWORK LOG\nDate,Time (logged),Notes\n';
+      csv+='\n'+oneTimeTimeSummaryCSV(c);
+      csv+='WORK LOG\nDate,Time (logged),Notes\n';
       [...c.entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
         csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
       });
@@ -1037,7 +1060,8 @@ function exportClientCSV(){
     (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
     csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
     (c.oneTimeParties||[]).forEach(p=>(p.payments||[]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{csv+='"'+(p.name||'')+'","'+(x.date||'')+'",Rs'+(Number(x.amount)||0).toFixed(2)+',"'+(x.note||'')+'"\n';}));
-    csv+='\nWORK LOG\nDate,Time (logged),Notes\n';
+    csv+='\n'+oneTimeTimeSummaryCSV(c);
+    csv+='WORK LOG\nDate,Time (logged),Notes\n';
     [...c.entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
       csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
     });
@@ -1049,7 +1073,7 @@ function exportClientCSV(){
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=c.name.replace(/[^a-z0-9]+/gi,'_')+'_'+month+'_'+S.year+'.csv';
+  a.download=c.name.replace(/[^a-z0-9]+/gi,'_')+(mode==='onetime'?'_full_engagement':'_'+month+'_'+S.year)+'.csv';
   a.click();
   showToast('Exported '+c.name);
 }
