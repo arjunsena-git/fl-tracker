@@ -1,4 +1,4 @@
-const CACHE = 'arjun-fl-v16';
+const CACHE = 'arjun-fl-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -25,6 +25,16 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   // only handle requests within our scope
   if (!e.request.url.includes(location.origin)) return;
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+        return response;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;

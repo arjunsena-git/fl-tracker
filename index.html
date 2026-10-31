@@ -129,6 +129,46 @@
   .footer-stat-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
   .export-btn { background: rgba(240,96,200,0.1); border: 1px solid var(--accent3); color: var(--accent3); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .export-btn:active { background: rgba(240,96,200,0.2); }
+  .backup-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+  .backup-btn:active { border-color: var(--accent2); color: var(--accent2); }
+  .engagement-ledger { border-top: 1px solid var(--border); background: #151519; padding: 14px 16px; }
+  .engagement-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .engagement-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
+  .engagement-sub { color: var(--text3); font-size: 10px; margin-top: 3px; }
+  .engagement-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .engagement-control { display: flex; flex-direction: column; gap: 4px; }
+  .engagement-control label { color: var(--text3); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .engagement-control input, .engagement-control select { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 8px; border-radius: 6px; outline: none; }
+  .party-list { display: grid; gap: 10px; }
+  .party-item { position: relative; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
+  .party-main { display: grid; grid-template-columns: minmax(140px,1fr) minmax(110px,150px) auto auto; gap: 10px; align-items: end; padding: 10px 48px 10px 10px; }
+  .party-main > .mini-btn { position: absolute; top: 10px; right: 10px; width: 30px; }
+  .party-field { display: flex; flex-direction: column; gap: 4px; }
+  .party-field label { color: var(--text3); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .party-field input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 8px; border-radius: 6px; min-width: 0; width: 100%; outline: none; }
+  .party-stat { min-width: 82px; }
+  .party-stat-label { color: var(--text3); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .party-stat-value { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .party-payments { border-top: 1px solid var(--border); padding: 8px 10px; background: rgba(96,200,240,0.025); }
+  .payment-row, .payment-add { display: grid; grid-template-columns: 125px 120px minmax(120px,1fr) 34px; gap: 8px; align-items: center; }
+  .payment-row { padding: 5px 0; color: var(--text2); font-size: 11px; }
+  .payment-add { margin-top: 7px; }
+  .payment-add input { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 7px; border-radius: 6px; min-width: 0; width: 100%; outline: none; }
+  .mini-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; height: 30px; cursor: pointer; font-size: 15px; }
+  .mini-btn.add { border-color: var(--accent2); color: var(--accent2); }
+  .party-add-btn { margin-top: 10px; background: rgba(200,240,96,0.08); border: 1px solid var(--accent); color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+  .legacy-payments { margin-top: 10px; color: var(--text3); font-size: 10px; }
+  .engagement-totals { display: grid; grid-template-columns: repeat(3,minmax(110px,1fr)); gap: 8px; margin-top: 12px; }
+  .engagement-total { border-top: 1px solid var(--border); padding-top: 8px; }
+  .engagement-total span { color: var(--text3); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; display: block; }
+  .engagement-total strong { font-family: 'Syne', sans-serif; font-size: 16px; display: block; margin-top: 3px; }
+  @media (max-width: 680px) {
+    .party-main { grid-template-columns: 1fr 1fr; }
+    .party-stat { min-width: 0; }
+    .payment-row, .payment-add { grid-template-columns: 1fr 1fr 34px; }
+    .payment-row .payment-note, .payment-add .payment-note { grid-column: 1 / -2; }
+    .engagement-totals { grid-template-columns: 1fr; }
+  }
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
   .modal-backdrop.open { opacity: 1; pointer-events: all; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 28px 24px calc(28px + env(safe-area-inset-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -147,6 +187,7 @@
   .empty-state { padding: 40px 24px; text-align: center; color: var(--text3); font-size: 13px; }
   .empty-state .big { font-size: 36px; margin-bottom: 12px; }
   .toast { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--accent); color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 20px; border-radius: 100px; z-index: 200; transition: transform 0.3s ease; white-space: nowrap; }
+  .toast:empty { display: none; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   /* sync indicator */
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-left: 8px; animation: pulse 2s infinite; }
@@ -185,6 +226,7 @@
         <input type="number" class="rate-input" id="defaultRate" placeholder="0" min="0" inputmode="numeric">
       </div>
     </div>
+    <button class="backup-btn" id="btnBackup">Backup data</button>
     <button class="export-btn" id="btnExport">&#11015; Export CSV</button>
   </div>
 
@@ -239,6 +281,12 @@ function normalizeClient(c) {
     const legacyTotal = c.entries.reduce((s,e)=>s+(Number(e.fixedAmt)||0),0);
     if (legacyTotal > 0) c.oneTimeFee = legacyTotal;
   }
+  if (!Array.isArray(c.oneTimeParties)) c.oneTimeParties=[];
+  c.oneTimeParties.forEach(p => { if (!Array.isArray(p.payments)) p.payments=[]; });
+  if (c.billingMode === 'onetime' && c.oneTimeLedgerEnabled == null && Number(c.oneTimeFee)>0) {
+    c.oneTimeParties=[{id:uid(),name:'General engagement',agreedAmount:Number(c.oneTimeFee)||0,payments:[]}];
+    c.oneTimeLedgerEnabled=true;
+  }
 }
 
 function load() {
@@ -270,6 +318,32 @@ function setAdvancePaid(c,v) { if(!c.advances)c.advances={}; c.advances[monthKey
 function getAdvanceCredit(c) { return Number((c.advanceCredits||{})[monthKey()])||0; }
 function setAdvanceCredit(c,v){ if(!c.advanceCredits)c.advanceCredits={}; c.advanceCredits[monthKey()]=Number(v)||0; }
 function getAdv(c)     { return getAdvancePaid(c)+getAdvanceCredit(c); }
+function monthInputKey() { return S.year+'-'+String(S.month+1).padStart(2,'0'); }
+function paymentInMonth(p) {
+  const d=parseDate(p.date);
+  return d.y===S.year && d.m===S.month;
+}
+function getLegacyAdvanceTotal(c) {
+  const paid=Object.values(c.advances||{}).reduce((s,v)=>s+(Number(v)||0),0);
+  const adjusted=Object.values(c.advanceCredits||{}).reduce((s,v)=>s+(Number(v)||0),0);
+  return paid+adjusted;
+}
+function getOneTimeAgreed(c) {
+  if (c.oneTimeLedgerEnabled) return (c.oneTimeParties||[]).reduce((s,p)=>s+(Number(p.agreedAmount)||0),0);
+  return Number(c.oneTimeFee)||0;
+}
+function getPartyPaid(p) { return (p.payments||[]).reduce((s,x)=>s+(Number(x.amount)||0),0); }
+function getOneTimePaid(c) {
+  return getLegacyAdvanceTotal(c)+(c.oneTimeParties||[]).reduce((s,p)=>s+getPartyPaid(p),0);
+}
+function getOneTimePaidThisMonth(c) {
+  const ledger=(c.oneTimeParties||[]).reduce((s,p)=>s+(p.payments||[]).filter(paymentInMonth).reduce((a,x)=>a+(Number(x.amount)||0),0),0);
+  return getAdv(c)+ledger;
+}
+function getPeriodCovered(c) {
+  if(getBillingMode(c)!=='onetime') return getAdv(c);
+  return !c.oneTimeFinalMonth || c.oneTimeFinalMonth===monthInputKey() ? getOneTimePaid(c) : getOneTimePaidThisMonth(c);
+}
 function parseDate(str) {
   // parse YYYY-MM-DD directly to avoid UTC timezone shift on iOS
   const p = str ? str.split('-') : [];
@@ -292,7 +366,7 @@ function render() {
 
 function renderSummary() {
   const te=S.clients.reduce((s,c)=>s+earned(c),0);
-  const ta=S.clients.reduce((s,c)=>s+getAdv(c),0);
+  const ta=S.clients.reduce((s,c)=>s+getPeriodCovered(c),0);
   const nc=te-ta;
   const tm=S.clients.reduce((s,c)=>s+mEntries(c).reduce((a,e)=>a+eMins(e),0),0);
   const ac=S.clients.filter(c=>mEntries(c).some(e=>eMins(e)>0)).length;
@@ -319,8 +393,66 @@ function clientEarnedAmount(c) {
   const ents = mEntries(c);
   if (mode === 'hourly')   return ents.reduce((s,e) => s + toHrs(eMins(e)) * getRate(c), 0);
   if (mode === 'monthly')  return Number(c.monthlyFee) || 0;
-  if (mode === 'onetime')  return Number(c.oneTimeFee) || 0;
+  if (mode === 'onetime')  return !c.oneTimeFinalMonth || c.oneTimeFinalMonth===monthInputKey() ? getOneTimeAgreed(c) : 0;
   return 0;
+}
+
+function renderOneTimeLedger(c) {
+  const parties=c.oneTimeParties||[];
+  const agreed=getOneTimeAgreed(c);
+  const paid=getOneTimePaid(c);
+  const balance=agreed-paid;
+  const legacy=getLegacyAdvanceTotal(c);
+  let partyHtml='';
+  parties.forEach(p=>{
+    const partyPaid=getPartyPaid(p);
+    const partyBalance=(Number(p.agreedAmount)||0)-partyPaid;
+    const payments=[...(p.payments||[])].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const paymentRows=payments.map(x=>
+      '<div class="payment-row">'+
+        '<span>'+esc(x.date||'No date')+'</span>'+
+        '<strong style="color:var(--accent2)">'+fmtINR(x.amount||0)+'</strong>'+
+        '<span class="payment-note">'+esc(x.note||'')+'</span>'+
+        '<button class="mini-btn" data-action="del-party-payment" data-pid="'+p.id+'" data-payid="'+x.id+'" title="Delete payment">×</button>'+
+      '</div>'
+    ).join('');
+    partyHtml+=
+      '<div class="party-item">'+
+        '<div class="party-main">'+
+          '<div class="party-field"><label>Participant / fee group</label><input type="text" value="'+esc(p.name||'')+'" data-action="party-name" data-pid="'+p.id+'" placeholder="Person X or Person Y + Z"></div>'+
+          '<div class="party-field"><label>Agreed amount</label><input type="text" inputmode="numeric" value="'+(p.agreedAmount||'')+'" data-action="party-agreed" data-pid="'+p.id+'" placeholder="0"></div>'+
+          '<div class="party-stat"><div class="party-stat-label">Paid</div><div class="party-stat-value" style="color:var(--accent2)">'+fmtINR(partyPaid)+'</div></div>'+
+          '<div class="party-stat"><div class="party-stat-label">Balance</div><div class="party-stat-value" style="color:'+(partyBalance>0?'var(--accent3)':'var(--accent)')+'">'+fmtINR(partyBalance)+'</div></div>'+
+          '<button class="mini-btn" data-action="del-party" data-pid="'+p.id+'" title="Delete fee group">×</button>'+
+        '</div>'+
+        '<div class="party-payments">'+
+          (paymentRows||'<div style="color:var(--text3);font-size:10px;">No payments recorded yet</div>')+
+          '<div class="payment-add">'+
+            '<input type="date" value="'+today()+'" data-role="payment-date" data-pid="'+p.id+'">'+
+            '<input type="text" inputmode="numeric" placeholder="Amount" data-role="payment-amount" data-pid="'+p.id+'">'+
+            '<input class="payment-note" type="text" placeholder="Payment note" data-role="payment-note" data-pid="'+p.id+'">'+
+            '<button class="mini-btn add" data-action="add-party-payment" data-pid="'+p.id+'" title="Add payment">+</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  });
+  return '<div class="engagement-ledger">'+
+    '<div class="engagement-head">'+
+      '<div><div class="engagement-title">Engagement ledger</div><div class="engagement-sub">Amounts and payments carry across every month</div></div>'+
+      '<div class="engagement-controls">'+
+        '<div class="engagement-control"><label>Final billing month</label><input type="month" value="'+esc(c.oneTimeFinalMonth||'')+'" data-action="one-time-final-month"></div>'+
+        '<div class="engagement-control"><label>Status</label><select data-action="one-time-status"><option value="active"'+((c.oneTimeStatus||'active')==='active'?' selected':'')+'>Active</option><option value="complete"'+(c.oneTimeStatus==='complete'?' selected':'')+'>Complete</option></select></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="party-list">'+(partyHtml||'<div style="color:var(--text3);font-size:11px;">Add a participant or fee group to begin.</div>')+'</div>'+
+    '<button class="party-add-btn" data-action="add-party">＋ Add participant / fee group</button>'+
+    (legacy>0?'<div class="legacy-payments">Existing monthly advance records are preserved and included: '+fmtINR(legacy)+'</div>':'')+
+    '<div class="engagement-totals">'+
+      '<div class="engagement-total"><span>Total agreed</span><strong>'+fmtINR(agreed)+'</strong></div>'+
+      '<div class="engagement-total"><span>Total received / adjusted</span><strong style="color:var(--accent2)">'+fmtINR(paid)+'</strong></div>'+
+      '<div class="engagement-total"><span>Remaining</span><strong style="color:'+(balance>0?'var(--accent3)':'var(--accent)')+'">'+fmtINR(balance)+'</strong></div>'+
+    '</div>'+
+  '</div>';
 }
 
 function renderPanel() {
@@ -333,10 +465,11 @@ function renderPanel() {
   const rate  = getRate(c);
   const advPaid   = getAdvancePaid(c);
   const advCredit = getAdvanceCredit(c);
-  const adv   = getAdv(c);
+  const adv   = mode==='onetime'?getOneTimePaid(c):getAdv(c);
   const ents  = mEntries(c);
   const tMins = ents.reduce((s,e)=>s+eMins(e),0);
-  const earn  = clientEarnedAmount(c);
+  const allTimeMins=c.entries.reduce((s,e)=>s+eMins(e),0);
+  const earn  = mode==='onetime'?getOneTimeAgreed(c):clientEarnedAmount(c);
   const net   = earn - adv;
   const dot   = DOTS[S.clients.indexOf(c)%DOTS.length];
   const sorted= [...ents].sort((a,b)=>a.date.localeCompare(b.date));
@@ -424,20 +557,12 @@ function renderPanel() {
       '</div>';
   } else if(mode==='onetime'){
     modeConfigHtml =
-      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
-        '<span style="font-size:11px;color:var(--text3);">Agreed Amount</span>'+
-        '<div class="client-custom-rate" style="border-color:rgba(240,96,200,0.35);background:rgba(240,96,200,0.04);">'+
-          '<span style="color:var(--accent3);font-size:12px;">₹</span>'+
-          '<input type="text" inputmode="numeric" placeholder="0" value="'+(c.oneTimeFee||'')+'" data-action="one-time-fee" style="background:none;border:none;color:var(--accent3);font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;width:110px;outline:none;">'+
-          '<span style="font-size:11px;color:var(--text3);">total</span>'+
-        '</div>'+
-        '<span style="font-size:11px;color:var(--text3);">log hours as work happens</span>'+
-      '</div>';
+      '<span style="font-size:11px;color:var(--text3);">Log hours monthly; manage agreed fees and payments in the engagement ledger.</span>';
   }
 
   // footer earned label varies by mode
-  const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Agreed Amount';
-  const timeFooter = '<div class="footer-stat"><div class="footer-stat-label">Time</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(tMins)+'</div></div>';
+  const earnLabel = mode==='hourly'?'Earned':mode==='monthly'?'Monthly Fee':'Total Agreed';
+  const timeFooter = '<div class="footer-stat"><div class="footer-stat-label">'+(mode==='onetime'?'Total Time':'Time')+'</div><div class="footer-stat-value" style="color:var(--accent2)">'+fmtHM(mode==='onetime'?allTimeMins:tMins)+'</div></div>';
 
   // table header varies
   const thTime = '<th>Time</th>';
@@ -456,12 +581,13 @@ function renderPanel() {
         modeHtml+
         modeConfigHtml+
       '</div>'+
+      (mode==='onetime'?renderOneTimeLedger(c):'')+
       '<div class="log-table-wrap"><table class="log-table">'+
         '<thead><tr><th>Date</th>'+thTime+thAmt+'<th>Notes</th><th></th></tr></thead>'+
         '<tbody>'+rows+'</tbody>'+
       '</table></div>'+
       '<div class="add-row-area"><button class="add-row-btn" data-action="add-entry">＋ Add entry</button></div>'+
-      '<div class="advance-row">'+
+      (mode==='onetime'?'':'<div class="advance-row">'+
         '<span class="advance-label">💰 Advance</span>'+
         '<div class="advance-field">'+
           '<span class="advance-field-label">Paid now</span>'+
@@ -479,12 +605,12 @@ function renderPanel() {
         '</div>'+
         '<div class="advance-total"><span>Advance covered</span><strong id="advance-total">'+fmtINR(adv)+'</strong></div>'+
         '<span class="advance-hint">cash received + amount you owed client</span>'+
-      '</div>'+
+      '</div>')+
       '<div class="client-footer">'+
         timeFooter+
         '<div class="footer-stat"><div class="footer-stat-label">'+earnLabel+'</div><div class="footer-stat-value" style="color:var(--text)">'+fmtINR(earn)+'</div></div>'+
-        '<div class="footer-stat"><div class="footer-stat-label">− Covered</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
-        '<div class="footer-stat"><div class="footer-stat-label">To Invoice</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">− '+(mode==='onetime'?'Received':'Covered')+'</div><div class="footer-stat-value" style="color:var(--accent2)" id="ftr-adv">'+fmtINR(adv)+'</div></div>'+
+        '<div class="footer-stat"><div class="footer-stat-label">'+(mode==='onetime'?'Remaining':'To Invoice')+'</div><div class="footer-stat-value" style="color:'+(net<0?'var(--danger)':'var(--accent)')+'" id="ftr-net">'+fmtINR(net)+'</div></div>'+
         '<button class="export-btn" data-action="export-client">&#11015; Export</button>'+
       '</div>'+
     '</div>';
@@ -523,7 +649,7 @@ function closeModal() { document.getElementById('addModal').classList.remove('op
 function confirmAdd() {
   const name=document.getElementById('newClientName').value.trim();
   if(!name){showToast('Enter a client name');return;}
-  const c={id:uid(),name,customRate:null,advances:{},advanceCredits:{},entries:[]};
+  const c={id:uid(),name,customRate:null,advances:{},advanceCredits:{},oneTimeParties:[],entries:[]};
   S.clients.push(c); S.activeClient=c.id;
   closeModal(); save(); render();
 }
@@ -552,10 +678,15 @@ document.addEventListener('click', function(e) {
   if(act==='del-client')  {delClient();return;}
   if(act==='export-client'){exportClientCSV();return;}
   if(act==='toggle-rate') {toggleRate();return;}
+  if(act==='add-party')   {addOneTimeParty();return;}
+  if(act==='del-party')   {delOneTimeParty(el.dataset.pid);return;}
+  if(act==='add-party-payment'){addPartyPayment(el.dataset.pid);return;}
+  if(act==='del-party-payment'){delPartyPayment(el.dataset.pid,el.dataset.payid);return;}
   if(act==='set-mode')    {
     const c=S.clients.find(x=>x.id===S.activeClient);
     if(!c) return;
     c.billingMode=el.dataset.mode;
+    if(c.billingMode==='onetime' && c.oneTimeLedgerEnabled==null){c.oneTimeLedgerEnabled=true;if(!c.oneTimeParties)c.oneTimeParties=[];}
     save();renderPanel();renderSummary();
     return;
   }
@@ -570,7 +701,7 @@ document.addEventListener('input', function(e) {
   if(!c) return;
   if(act==='cname')  {c.name=el.value||'Client';save();renderTabs();return;}
   if(act==='crate')  {c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'||act==='one-time-fee'||act==='efixedamt'){
+  if(act==='monthly-fee'||act==='one-time-fee'||act==='party-name'||act==='party-agreed'||act==='efixedamt'){
     // do nothing on input — save on blur only to prevent iOS keyboard dismissal
     return;
   }
@@ -629,8 +760,19 @@ document.addEventListener('change', function(e) {
   if(!c) return;
 
   if(act==='crate'){c.customRate=Number(el.value)||0;save();renderSummary();renderPanel();return;}
-  if(act==='monthly-fee'||act==='one-time-fee'||act==='efixedamt'){
+  if(act==='monthly-fee'||act==='one-time-fee'||act==='party-name'||act==='party-agreed'||act==='efixedamt'){
     // handled on blur only
+    return;
+  }
+
+  if(act==='one-time-final-month'){
+    c.oneTimeFinalMonth=el.value||'';
+    save();renderSummary();renderPanel();
+    return;
+  }
+  if(act==='one-time-status'){
+    c.oneTimeStatus=el.value||'active';
+    save();renderPanel();
     return;
   }
 
@@ -688,6 +830,20 @@ document.addEventListener('blur', function(e) {
     save(); renderSummary(); updateFooterInPlace(c);
     return;
   }
+  if (act === 'party-name') {
+    const party=(c.oneTimeParties||[]).find(x=>x.id===el.dataset.pid);
+    if(!party) return;
+    party.name=el.value.trim()||'Unnamed participant';
+    save();renderPanel();
+    return;
+  }
+  if (act === 'party-agreed') {
+    const party=(c.oneTimeParties||[]).find(x=>x.id===el.dataset.pid);
+    if(!party) return;
+    party.agreedAmount=Number(el.value.replace(/[^0-9.]/g,''))||0;
+    save();renderSummary();renderPanel();
+    return;
+  }
   if (act === 'efixedamt') {
     const entry = c.entries.find(x => x.id === el.dataset.eid);
     if (!entry) return;
@@ -698,6 +854,7 @@ document.addEventListener('blur', function(e) {
 }, true); // useCapture=true so it fires on iOS
 document.getElementById('btnPrev').addEventListener('click',()=>changeMonth(-1));
 document.getElementById('btnNext').addEventListener('click',()=>changeMonth(1));
+document.getElementById('btnBackup').addEventListener('click',exportBackupJSON);
 document.getElementById('btnExport').addEventListener('click',exportCSV);
 document.getElementById('btnModalCancel').addEventListener('click',closeModal);
 document.getElementById('btnModalConfirm').addEventListener('click',confirmAdd);
@@ -733,6 +890,53 @@ function toggleRate(){
   save();renderPanel();renderSummary();
 }
 
+function addOneTimeParty(){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  if(!Array.isArray(c.oneTimeParties)) c.oneTimeParties=[];
+  c.oneTimeLedgerEnabled=true;
+  c.oneTimeParties.push({id:uid(),name:'New participant',agreedAmount:0,payments:[]});
+  save();renderPanel();renderSummary();
+}
+function delOneTimeParty(pid){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  if(!c) return;
+  const party=(c.oneTimeParties||[]).find(x=>x.id===pid);
+  if(!party||!confirm('Delete "'+party.name+'" and all payment records under it?')) return;
+  c.oneTimeParties=c.oneTimeParties.filter(x=>x.id!==pid);
+  save();renderPanel();renderSummary();
+}
+function addPartyPayment(pid){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  const party=c&&(c.oneTimeParties||[]).find(x=>x.id===pid);
+  if(!party) return;
+  const dateEl=document.querySelector('[data-role="payment-date"][data-pid="'+pid+'"]');
+  const amountEl=document.querySelector('[data-role="payment-amount"][data-pid="'+pid+'"]');
+  const noteEl=document.querySelector('[data-role="payment-note"][data-pid="'+pid+'"]');
+  const amount=Number(String(amountEl?amountEl.value:'').replace(/[^0-9.]/g,''))||0;
+  if(!amount){showToast('Enter a payment amount');return;}
+  party.payments.push({id:uid(),date:(dateEl&&dateEl.value)||today(),amount,note:(noteEl&&noteEl.value.trim())||''});
+  save();renderPanel();renderSummary();
+}
+function delPartyPayment(pid,payid){
+  const c=S.clients.find(x=>x.id===S.activeClient);
+  const party=c&&(c.oneTimeParties||[]).find(x=>x.id===pid);
+  const payment=party&&(party.payments||[]).find(x=>x.id===payid);
+  if(!payment||!confirm('Delete the '+fmtINR(payment.amount||0)+' payment dated '+(payment.date||'unknown')+'?')) return;
+  party.payments=party.payments.filter(x=>x.id!==payid);
+  save();renderPanel();renderSummary();
+}
+
+function exportBackupJSON(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fl-tracker-full-backup-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  showToast('Full data backup downloaded');
+}
+
 function exportCSV(){
   const month=MONTHS[S.month];
   let csv='Arjun FL Hours Tracker - '+month+' '+S.year+'\n\n';
@@ -753,9 +957,18 @@ function exportCSV(){
         csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
       });
     } else if(mode==='onetime'){
-      csv+='Agreed Amount: Rs'+(c.oneTimeFee||0)+'\n';
-      csv+='Date,Time (logged),Notes\n';
-      mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const agreed=getOneTimeAgreed(c),received=getOneTimePaid(c);
+      csv+='Status,'+(c.oneTimeStatus||'active')+'\n';
+      csv+='Final Billing Month,'+(c.oneTimeFinalMonth||'Not set')+'\n';
+      csv+='Total Agreed,Rs'+agreed.toFixed(2)+'\n';
+      csv+='Total Received / Adjusted,Rs'+received.toFixed(2)+'\n';
+      csv+='Remaining,Rs'+(agreed-received).toFixed(2)+'\n\n';
+      csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
+      (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
+      csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
+      (c.oneTimeParties||[]).forEach(p=>(p.payments||[]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{csv+='"'+(p.name||'')+'","'+(x.date||'')+'",Rs'+(Number(x.amount)||0).toFixed(2)+',"'+(x.note||'')+'"\n';}));
+      csv+='\nWORK LOG\nDate,Time (logged),Notes\n';
+      [...c.entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
         csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
       });
     }
@@ -764,7 +977,8 @@ function exportCSV(){
   csv+='\nSUMMARY\nClient,Billing Mode,Earned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
   let gE=0,gA=0;
   S.clients.forEach(c=>{
-    const earn=clientEarnedAmount(c),paid=getAdvancePaid(c),credit=getAdvanceCredit(c),adv=getAdv(c);
+    const isOneTime=getBillingMode(c)==='onetime';
+    const earn=clientEarnedAmount(c),paid=isOneTime?getOneTimePaidThisMonth(c):getAdvancePaid(c),credit=isOneTime?0:getAdvanceCredit(c),adv=isOneTime?paid:getAdv(c);
     gE+=earn;gA+=adv;
     csv+='"'+c.name+'",'+getBillingMode(c)+',Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
   });
@@ -785,10 +999,10 @@ function exportClientCSV(){
   const month=MONTHS[S.month];
   let csv='Arjun FL Hours Tracker - '+c.name+' ('+mode+') - '+month+' '+S.year+'\n\n';
   const rate=getRate(c);
-  const paid=getAdvancePaid(c);
-  const credit=getAdvanceCredit(c);
-  const adv=getAdv(c);
-  const earn=clientEarnedAmount(c);
+  const paid=mode==='onetime'?getOneTimePaid(c):getAdvancePaid(c);
+  const credit=mode==='onetime'?0:getAdvanceCredit(c);
+  const adv=mode==='onetime'?paid:getAdv(c);
+  const earn=mode==='onetime'?getOneTimeAgreed(c):clientEarnedAmount(c);
   if(mode==='hourly'){
     csv+='Date,Time,Decimal Hours,Rate,Amount,Notes\n';
     mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
@@ -802,14 +1016,24 @@ function exportClientCSV(){
       csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
     });
   } else if(mode==='onetime'){
-    csv+='Agreed Amount: Rs'+(c.oneTimeFee||0)+'\n';
-    csv+='Date,Time (logged),Notes\n';
-    mEntries(c).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    csv+='Status,'+(c.oneTimeStatus||'active')+'\n';
+    csv+='Final Billing Month,'+(c.oneTimeFinalMonth||'Not set')+'\n';
+    csv+='Total Agreed,Rs'+earn.toFixed(2)+'\n';
+    csv+='Total Received / Adjusted,Rs'+paid.toFixed(2)+'\n';
+    csv+='Remaining,Rs'+(earn-paid).toFixed(2)+'\n\n';
+    csv+='FEE GROUPS\nParticipant / Group,Agreed,Paid,Balance\n';
+    (c.oneTimeParties||[]).forEach(p=>{const pp=getPartyPaid(p);csv+='"'+(p.name||'')+'",Rs'+(Number(p.agreedAmount)||0).toFixed(2)+',Rs'+pp.toFixed(2)+',Rs'+((Number(p.agreedAmount)||0)-pp).toFixed(2)+'\n';});
+    csv+='\nPAYMENTS\nParticipant / Group,Date,Amount,Note\n';
+    (c.oneTimeParties||[]).forEach(p=>(p.payments||[]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{csv+='"'+(p.name||'')+'","'+(x.date||'')+'",Rs'+(Number(x.amount)||0).toFixed(2)+',"'+(x.note||'')+'"\n';}));
+    csv+='\nWORK LOG\nDate,Time (logged),Notes\n';
+    [...c.entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
       csv+='"'+e.date+'","'+fmtHM(eMins(e))+'","'+(e.notes||'')+'"\n';
     });
   }
-  csv+='\nSUMMARY\nEarned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
-  csv+='Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+  if(mode!=='onetime'){
+    csv+='\nSUMMARY\nEarned,Paid Now,Old Payable Adjusted,Advance Covered,Net to Invoice\n';
+    csv+='Rs'+earn.toFixed(2)+',Rs'+paid.toFixed(2)+',Rs'+credit.toFixed(2)+',Rs'+adv.toFixed(2)+',Rs'+(earn-adv).toFixed(2)+'\n';
+  }
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
